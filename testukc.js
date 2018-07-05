@@ -17,6 +17,14 @@ const DEFAULT_PASSWORD = 'MyPassword'; // use your password here
 basicAuth.username = 'so@root'; // use your username and partition here. so@root is a built-in default user for root
 basicAuth.password = DEFAULT_PASSWORD;
 
+// Configure login with client certificate
+// const fs = require('fs');
+// const https = require('https');
+// const requestAgent = new https.Agent();
+// requestAgent.options.pfx = fs.readFileSync('path_to_client_cert.pfx');
+// requestAgent.options.passphrase = "pfx_password";
+// defaultClient.requestAgent = requestAgent;
+
 const generalApi = new UkcAdminApi.GeneralApi()
 const partitionsApi = new UkcAdminApi.PartitionsApi()
 const usersApi = new UkcAdminApi.UsersApi();
