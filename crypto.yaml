@@ -1,1292 +1,1904 @@
----
-swagger: "2.0"
+swagger: '2.0'
 info:
-  description: "The UKC Crypto API provides cryptographic services used with Keys\
-    \ managed by UKC\n\n# Authentication\nMost UKC API operations require an authorization\
-    \ context and user permissions. Users are identified by an authentication token\
-    \ attached to the request headers.\n## Certificate Authentication\nDepending on\
-    \ UKC server setup, a request to the API may require a client certificate. \
-    The certificate identifies the server or application connecting with\
-    \ the UKC server. In UKC terms, this server is denoted as the UKC Client.\n\nSuch certificates\
-    \ can be generated using the UKC CLI or UI tools, as well as by the Administration\
-    \ API.\n\nRefer to the *UKC Users Guide* for further details on configuring\
-    \ client certificate.\n## Basic Authentication\n\
-    \ UKC also supports user authentication with the *Basic*\
-    \ authentication scheme. The *Basic* HTTP authentication scheme is defined in\
-    \ RFC 7617, which transmits credentials as user/password pairs, encoded using\
-    \ base64 in the HTTP authorization header.\nThe user ID can include the required\
-    \ partition in the format `username@partitionId:password`.\nThe user partition can\
-    \ be excluded from the credentials if a client certificate is used. In such a case,\
-    \ the partition is set by the partition that the client is registered with.\n## Authentication\
-    \ Failure (unauthorized)\nIn case an operation is unauthorized, the status code HTTP 401 \
-    \ will be returned with the `WWW-Authenticate` header.\n# Partitioning\n\
-    UKC objects are organized into partitions. Partitioning allows namespacing and\
-    \ access control to objects by configuring users with roles per partition.\n\nThe\
-    \ objects contained in a partition are: Users, Clients, Keys, Certificates, and\
-    \ Secrets\n## Permissions\nPartitions have the following properties:\n- Any partition can have many users who can access\
-    \ its objects.\n- A partition user can have one of two security roles:\n  - \
-    \ Security Officer (\"so\") - Can perform all operations on the partition objects including\
-    \ administration tasks, such as adding, modifying and deleting objects.\n  - User - Can only\
-    \ perform cryptographic operations with the partition objects, such as sign and\
-    \ verify, and also edit keys, certificates, and secrets.\n## Root Partition\n\
-    The default built-in partition for an UKC cluster is called `root` and is created\
-    \ automatically when setting up a new UKC cluster. The `root` partition contains\
-    \ all other partitions.\n## Partition Hierarchy\n- __Parent partition__\n  Any\
-    \ partition _except_ the root partition has the root partition as its parent partition.\n\
-    - __Permission inheritance__\nRoot access permissions can be configured to\
-    \ be _inherited_ from the root partition. For example, a user `rootSO` which\
-    \ is an SO on the `root` partition, would also have SO permissions on `partitionA`\
-    \ if `partitionA` is configured to inherit permissions from `root`.\n  __Note:__\
-    \ By default, access permissions are not inherited from the root partition. \
-    \ To use permission inheritance, it should be configured explicitly.\n##\
-    \ Default Partition Context\nFor every request the _default partition_ is\
-    \ the home partition of the connected user.\nFor example:\n  - `so@root` - the\
-    \ default partition is the root partition.\n  - `so@partitionA` - the default\
-    \ partition is partitionA.\n\nIf a user of the root partition is executing\
-    \ an operation on an inherited partition, the partition context should be set\
-    \ using the query parameter *partition*, which is availble for all relevant requests.\n\
-    # Object IDs\nMany operations require an object ID as part of the resource URI.\
-    \ Objects IDs can be one of an object __UUID__ where applicable, which is a\
-    \ server generated ID that is unique per object type.\n__Note__: Objects of\
-    \ different types can have the same UUID. For example, a user and a key, which is\
-    \ due to the fact that UUID's are unique only per object type.\n# Quorum\nThe UKC\
-    \ can be configured to require quorum approval for certain operations. If\
-    \ the operation you are executing requires quorum approval, the HTTP result is 202 (ACCEPTED)\
-    \ and a quorum job object.\n\nUse the Jobs API in order to manage approvals for\
-    \ different jobs.\n# Common Errors\nAny API call can result in one of the following\
-    \ general HTTP codes:\n- 500 - General server error.\n- 404 - Resource not found.\
-    \ Verify that the URL exists.\n- 401 - Unauthorized."
-  version: "1.0.0"
-  title: "UKC Crypto API"
-  termsOfService: ""
-  contact: 
-    name: "UKC Crypto API"
+  description: >-
+    The UKC Crypto API provides cryptographic services used with Keys 
+    managed by UKC.
+
+
+    __This API is in draft status and is currently being reviewed__
+
+
+    # Authentication
+
+    Most UKC API operations require an authorization context and user
+    permissions. Users are identified by an authentication token attached to the
+    request headers.
+
+    ## Basic Authentication
+
+    UKC supports the basic authentication scheme. The "Basic" HTTP
+    authentication scheme is defined in  RFC 7617, which transmits credentials
+    as user/password pairs, encoded using base64 in the HTTP Authorization
+    header.
+
+
+    The user ID can include the required partition in the format:
+
+    `username@partitionId:password`
+
+    ## Authentication Token
+
+    The system can authenticate the user with a generated authentication token,
+    which is valid for a limited time. This token eliminates the need to
+    transmit the  username/password on every request. See `GET /authToken` for
+    more information.
+
+    ## Authentication Failure (unauthorized)
+
+    If an operation is unauthorized, an HTTP 401 status code is returned with
+    the `WWW-Authenticate` header.
+
+    # Partitioning
+
+    UKC objects are organized into partitions. Partitioning allows namespacing
+    and access control to objects by configuring users with roles per partition.
+
+
+    The objects contained in a partition are: 
+
+    Users, Clients, Keys, Certificates, Secrets and other partitions
+
+    ## Permissions
+
+    Any partition can have many users who can access its objects.
+
+    A partition user can have one of two security roles:
+
+    - **so** - Security Officer. Can perform all operations on the partition
+    objects including administration: adding, modifying and deleting objects.
+
+    - **user** - Can only perform cryptographic operations with the partition
+    objects, such as sign and verify, and can also edit keys, certificates and
+    secrets.
+
+    ## Root Partition
+
+    The default built-in partition for an UKC cluster is called `root` and is
+    created automatically when setting up a new UKC cluster.
+
+    ## Partition Hierarchy
+
+    - __Parent partition__ - Any partition, _except_ the root partition, has one
+    parent partition.
+
+    - __Permissions inheritance__ - User access permissions can be configured to
+    be _inherited_ from the parent partition. For example, a user `userA`, which
+    is an SO on `partitionA`, would also have SO permissions on `partitionB` if
+    `partitionB` is child of `partitionA`.
+        - __Note:__ By default, access permissions are not inherited from the parent partition. To use permission inheritance, it should be configured explicitly.
+      
+    ## Default Partition Context
+
+    For every request the _default partition_ is the home partition of the
+    connected user.
+
+
+    For example:
+      - `so@partitionA` - the default partition is `partitionA`.
+      - `user@partitionA.partitionB` - the default partition is `partitionB`, which is a child of `partitionA`.
+      - `so@partitionB` - the default partition is `partitionB`, which is child of the root partition.
+      
+    ## Object Path
+
+    - A UKC object, such as User or Key, can be referenced by its unique object
+    path, which may be absolute or relative to the default partition.
+
+    - The object path is unique per object type. Therefore, within one partition
+    there can be two objects represented by the same path, one is a key and one
+    is a user.
+
+    - UKC object path is composed of a series of path components separated by
+    the dot character (`.`).
+
+    - A path component may represent a partition name or object name.
+      - The last component in a path is an object name.
+    - An absolute path starts with the tilde character `~` which represents the
+    root partition.
+      - For example, to delete a key named `keyA` that is contained in a partition `partitionC`:
+      `DELETE https://myukcserver.com/keys/~.partitionC.keyA`
+    - A relative path uses the current default partition as the root of the
+    specified path. 
+      - If a user is logged in as `so@partitionC`, he can perform the same delete action as in the previous example with:
+      `DELETE https://myukcserver.com/keys/keyA`.
+      - If the user is logged in as `so@root`, he can use the following as its relative to the root partition:
+      `DELETE https://myukcserver.com/keys/partitionC.keyA` 
+      
+    # Object IDs
+
+    Many operations require an object ID as part of the resource URI. Object ids
+    can be one of:
+
+    - An object __UUID__ where applicable. This ID is a server generated ID,
+    which is unique per object type.
+      - __Note:__ Objects of different types can have the same UUID. For example, user A and key A. That is due to the fact that UUIDs are unique only per object type.
+    - An object relative or absolute path as specified above.
+
+    # Quorum
+    
+    The UKC can be configured to require quorum approval for certain operations. In case the operation you are executing requires it, the http result would be 202 (ACCEPTED) and a quorum job object.
+    
+    Use the `jobs` API in order to manage approvals for different jobs.
+    
+    # Common Errors
+
+    Any API call can result in one of the following general HTTP codes:
+
+    - 500 - General server error.
+
+    - 404 - Resource not found. Verify that the URL exists.
+
+    - 401 - Unauthorized
+  version: 2.0.1806
+  title: Unbound Key Control Server
+  termsOfService: ''
+  contact:
+    name: UKC Administration API,
+    url: http://www.unboundtech.com,
+    email: support@unboundtech.com
+  license: {
+    name: '',
+    url: http://www.unboundtech.com
+  }
 tags:
-- name: "Keys"
+  - name: Keys
+  - name: Secrets
 schemes:
-- "https"
+  - https
 paths:
   /api/v1/keys:
     get:
       tags:
-      - "Keys"
-      summary: "List key objects"
-      description: "Return a list of keys"
-      operationId: "listKeys"
+        - Keys
+      summary: List key objects
+      description: Return a list of keys
+      operationId: listKeys
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "type"
-        in: "query"
-        description: "Key type"
-        required: false
-        type: "string"
-        enum:
-        - "RSA"
-        - "ECC"
-        - "AES"
-        - "TDES"
-        - "HMAC"
-      - name: "exportable"
-        in: "query"
-        description: "Is exportable"
-        required: false
-        type: "boolean"
-      - name: "trusted"
-        in: "query"
-        description: "Is Trusted"
-        required: false
-        type: "boolean"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: type
+          in: query
+          description: Key type
+          required: false
+          type: string
+          enum:
+            - RSA
+            - ECC
+            - AES
+            - TDES
+            - HMAC
+            - SIV
+            - PRF
+            - PWD
+        - name: exportable
+          in: query
+          description: Is exportable
+          required: false
+          type: boolean
+        - name: trusted
+          in: query
+          description: Is Trusted
+          required: false
+          type: boolean
+        - name: detailed
+          in: query
+          description: Detailed
+          required: false
+          type: boolean
+          default: false
       responses:
-        200:
-          description: "OK"
+        '200':
+          description: OK
           schema:
-            type: "array"
+            type: array
             items:
-              $ref: "#/definitions/KeyInfo"
+              $ref: '#/definitions/KeyInfo'
       security:
-      - basicAuth: []
+        - basicAuth: []
+        - Authorization: []
     post:
       tags:
-      - "Keys"
-      summary: "Import a new key"
-      description: "Import a new key from a key file"
-      operationId: "importKey"
+        - Keys
+      summary: Import a new asymmetric key
+      description: Import a new key based on the given file
+      operationId: importKey
       consumes:
-      - "multipart/form-data"
+        - multipart/form-data
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "partition ID"
-        required: false
-        type: "string"
-      - name: "file"
-        in: "formData"
-        description: "key file"
-        required: true
-        type: "file"
-      - name: "id"
-        in: "formData"
-        description: "key ID"
-        required: true
-        type: "string"
-      - name: "password"
-        in: "formData"
-        description: "password for the file if required"
-        required: false
-        type: "string"
-      - name: "description"
-        in: "formData"
-        description: "key description"
-        required: false
-        type: "string"
-      - name: "usage"
-        in: "formData"
-        description: "key usage"
-        required: false
-        type: "string"
-      - name: "keyOnly"
-        in: "formData"
-        description: "import only key (no chain)"
-        required: false
-        type: "boolean"
-      - name: "testMode"
-        in: "formData"
-        description: "get key info without importing"
-        required: false
-        type: "boolean"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: file
+          in: formData
+          description: key file
+          required: true
+          type: file
+        - name: id
+          in: formData
+          description: key id
+          required: true
+          type: string
+        - name: password
+          in: formData
+          description: password for the file if required
+          required: false
+          type: string
+        - name: description
+          in: formData
+          description: key description
+          required: false
+          type: string
+        - name: usage
+          in: formData
+          description: key usage
+          required: false
+          type: string
+        - name: keyOnly
+          in: formData
+          description: import only key (no chain)
+          required: false
+          type: boolean
+        - name: testMode
+          in: formData
+          description: get key info without importing
+          required: false
+          type: boolean
       responses:
-        201:
-          description: "Key generated successfully"
+        '201':
+          description: Key generated successfully
           schema:
-            $ref: "#/definitions/KeyInfo"
-        202:
-          description: "ACCEPTED"
-          schema:
-            $ref: "#/definitions/Job"
-        409:
-          description: "Object already exist"
+            $ref: '#/definitions/KeyInfo'
+        '409':
+          description: Object already exist
       security:
-      - basicAuth: []
+        - basicAuth: []
+        - Authorization: []
   /api/v1/keys/generate:
     post:
       tags:
-      - "Keys"
-      summary: "Generate a new key"
-      description: "Generate a new key based on provided parameters"
-      operationId: "generateKey"
+        - Keys
+      summary: 'Generate  new asymmetric key, key format is provided as a parameter'
+      description: Generate a new key based on provided parameters
+      operationId: generateKey
       consumes:
-      - "application/json"
+        - application/json
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "The new key"
-        required: false
-        schema:
-          $ref: "#/definitions/NewGeneratedKey"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - in: body
+          name: body
+          description: The new key
+          required: false
+          schema:
+            $ref: '#/definitions/NewGeneratedKey'
       responses:
-        201:
-          description: "Key generated successfully"
-        409:
-          description: "Object already exists"
+        '201':
+          description: Key generated successfully
+          schema:
+            $ref: '#/definitions/KeyInfo'
+        '409':
+          description: Object already exist
+          schema:
+            $ref: '#/definitions/KeyInfo'
       security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}':
     get:
       tags:
-      - "Keys"
-      summary: "Get key"
-      description: "Return public details of an asymmetric key or exportable symmetric\
-        \ key"
-      operationId: "getKey"
+        - Keys
+      summary: Get key detailed key information
+      description: 'Return public details of an asymmetric key or exportable symmetric key'
+      operationId: getKey
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "keyId"
-        in: "path"
-        description: "Key ID to look for"
-        required: true
-        type: "string"
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "obfuscate"
-        in: "query"
-        description: "Add obfuscated private key as part of encoded data, which is relevant\
-          \ for PKI keys only"
-        required: false
-        type: "boolean"
+        - name: keyId
+          in: path
+          description: Key ID to look for
+          required: true
+          type: string
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: detailed
+          in: query
+          description: Detailed
+          required: false
+          type: boolean
+          default: true
       responses:
-        200:
-          description: "OK"
+        '200':
+          description: OK
           schema:
-            $ref: "#/definitions/Key"
+            $ref: '#/definitions/KeyInfo'
       security:
-      - basicAuth: []
+        - basicAuth: []
+        - Authorization: []
     delete:
       tags:
-      - "Keys"
-      summary: "Delete a key"
-      description: "Delete provided key"
-      operationId: "deleteKey"
+        - Keys
+      summary: Delete a key
+      description: Delete provided key
+      operationId: deleteKey
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: true
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "Key ID to delete"
-        required: true
-        type: "string"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: Key ID to delete
+          required: true
+          type: string
       responses:
-        200:
-          description: "OK"
-        202:
-          description: "ACCEPTED"
-          schema:
-            $ref: "#/definitions/Job"
+        '200':
+          description: OK
       security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/decrypt:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/decrypt':
     post:
       tags:
-      - "Keys"
-      summary: "Decrypt a value using a key"
-      description: "Decryption is done using the key. It supports the same parameters as the encryption\
-        \ API"
-      operationId: "decryptWithKey"
+        - Keys
+      summary: Decrypt a value using a key
+      description: >-
+        Decryption is done using the key. Same parameters for encryption are
+        supported, as well as both simple and unseal mode, in case of symmetric
+        key, only simple mode is supported. If decryption fails with latest key
+        version the previous version (if such exist) will be used, etc.
+      operationId: decryptWithKey
       consumes:
-      - "application/json"
+        - application/json
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "The key used for decryption"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Data to decrypt"
-        required: false
-        schema:
-          $ref: "#/definitions/DecryptData"
-      responses:
-        200:
-          description: "OK. Returns  encoded clear text according to request parameters"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: The key used for decryption
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Data to decrypt
+          required: false
           schema:
-            $ref: "#/definitions/ClearText"
-        400:
-          description: "Authentication encryption failure"
+            $ref: '#/definitions/DecryptData'
+      responses:
+        '200':
+          description: OK. Returns clear text encoded according to request parameters
+          schema:
+            $ref: '#/definitions/ClearText'
+        '400':
+          description: Authentication encryption failure
       security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/decryptx:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/decryptx':
     post:
       tags:
-      - "Keys"
-      summary: "Decrypt multiple values using a key"
-      description: "Decryption is done using the key. It supports the same parameters as the encryption API."
-      operationId: "multiDecryptWithKey"
+        - Keys
+      summary: Decrypt multiple values using a key
+      description: >-
+        Decryption is done using the key. Same parameters for encryption are
+        supported, as well as both simple and unseal mode, in case of symmetric
+        key, only simple mode is supported. If decryption fails with latest key
+        version the previous version (if such exist) will be used, etc.
+      operationId: multiDecryptWithKey
       consumes:
-      - "application/json"
+        - application/json
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "The key used for decryption"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Data to decrypt"
-        required: false
-        schema:
-          $ref: "#/definitions/Decryptx"
-      responses:
-        200:
-          description: "Array of decrypted values with the requested encoding"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: The key used for decryption
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: TODO
+          required: false
           schema:
-            type: "array"
+            $ref: '#/definitions/Decryptx'
+      responses:
+        '200':
+          description: Array of decrypted values with requested encoding
+          schema:
+            type: array
             items:
-              $ref: "#/definitions/ClearText"
-        400:
-          description: "Authentication encryption failure"
+              $ref: '#/definitions/ClearText'
+        '400':
+          description: Authentication encryption failure
       security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/encrypt:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/encrypt':
     post:
       tags:
-      - "Keys"
-      summary: "Encrypt clear text into cipher text with an existing key"
-      description: "Encryption is done using the key. Parameters allow for selection of the padding\
-        \ mode and encryption mode."
-      operationId: "encryptWithKey"
+        - Keys
+      summary: Encrypt clear text into cipher text with an existing key
+      description: >-
+        Encryption is done using the key. Parameters allow selecting padding
+        mode and encryption mode. If key type is asymmetric encryption is done
+        exactly as encryption with a certificate, if key type is symmetric only
+        simple mode is supported.
+      operationId: encryptWithKey
       consumes:
-      - "application/json"
+        - application/json
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "ID of the key used for encryption"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Data to encrypt"
-        required: false
-        schema:
-          $ref: "#/definitions/EncryptData"
-      responses:
-        200:
-          description: "OK"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: Id of the Key used for encryption
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Data to encrypt
+          required: false
           schema:
-            $ref: "#/definitions/Cipher"
+            $ref: '#/definitions/EncryptData'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Cipher'
       security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/encryptx:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/encryptx':
     post:
       tags:
-      - "Keys"
-      summary: "Encrypt multiple values with an existing key"
-      description: "Encryption is done using the key. Parameters allow the selection of the padding\
-        \ mode and encryption mode."
-      operationId: "multiEncryptWithKey"
+        - Keys
+      summary: Encrypt multiple values with an existing key
+      description: >-
+        Encryption is done using the key. Parameters allow selecting padding
+        mode and encryption mode. If key type is asymmetric encryption is done
+        exactly as encryption with a certificate, if key type is symmetric only
+        simple mode is supported.
+      operationId: multiEncryptWithKey
       consumes:
-      - "application/json"
+        - application/json
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "Key used for encryption"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Data to encrypt"
-        required: false
-        schema:
-          $ref: "#/definitions/Encryptx"
-      responses:
-        200:
-          description: "OK"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: Key used for encryption
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: TODO
+          required: false
           schema:
-            type: "array"
+            $ref: '#/definitions/Encryptx'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: array
             items:
-              $ref: "#/definitions/Cipher"
+              $ref: '#/definitions/Cipher'
       security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/info:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/mac':
+    post:
+      tags:
+        - Keys
+      summary: Creates a Message Authentication Code (MAC) for a message using a key
+      description: Generate MAC for a message. MAC mode is provided as a parameter.
+      operationId: createMacWithKey
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: Key used for MAC
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Mac Data
+          required: false
+          schema:
+            $ref: '#/definitions/MACSignData'
+      responses:
+        '200':
+          description: OK. Returns the generated Message Authentication Code
+          schema:
+            $ref: '#/definitions/Mac'
+      security:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/macVerify':
+    post:
+      tags:
+        - Keys
+      summary: Verify a Message Authentication Code (MAC) using a key
+      description: Verifies a MAC value. Supports the same parameters as the MAC option.
+      operationId: verifyMacWithKey
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: Key used for verification
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Mac Verify Data
+          required: false
+          schema:
+            $ref: '#/definitions/MACVerifyData'
+      responses:
+        '200':
+          description: OK. Verified Successfully
+        '400':
+          description: Verification failed
+      security:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/seal':
+    post:
+      tags:
+        - Keys
+      summary: Encrypt clear text into cipher text with an existing key
+      description: >-
+        Encryption is done using the key. Parameters allow selecting padding
+        mode and encryption mode. If key type is asymmetric encryption is done
+        exactly as encryption with a certificate, if key type is symmetric only
+        simple mode is supported.
+      operationId: sealWithKey
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: Id of the Key used for encryption
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Data to seal
+          required: false
+          schema:
+            $ref: '#/definitions/SealData'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/SealedCipher'
+      security:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/sign':
+    post:
+      tags:
+        - Keys
+      summary: Sign a message using a key
+      description: >-
+        Hash and sign a given message. If requested can also assume the input is
+        a hash value and just sign it. Different modes are supported as
+        parameters and output can be either raw signature or PKCS7, based on
+        request.
+      operationId: signWithKey
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: Key used for signing
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: TODO
+          required: false
+          schema:
+            $ref: '#/definitions/SignData'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Signature'
+      security:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/unseal':
+    post:
+      tags:
+        - Keys
+      summary: Decrypt a value using a key
+      description: >-
+        Decryption is done using the key. Same parameters for encryption are
+        supported, as well as both simple and unseal mode, in case of symmetric
+        key, only simple mode is supported. If decryption fails with latest key
+        version the previous version (if such exist) will be used, etc.
+      operationId: unSealWithKey
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: The key used for decryption
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: Data to un-seal
+          required: false
+          schema:
+            $ref: '#/definitions/UnSealData'
+      responses:
+        '200':
+          description: OK. Returns clear text encoded according to request parameters
+          schema:
+            $ref: '#/definitions/ClearText'
+        '400':
+          description: Authentication encryption failure
+      security:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/value':
     get:
       tags:
-      - "Keys"
-      summary: "Get detailed key information"
-      description: ""
-      operationId: "getKeyInfo"
+        - Keys
+      summary: Get key
+      description: Return public details of a Asymmetric key or exportable symmetric key
+      operationId: getKeyData
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "keyId"
-        in: "path"
-        description: "Key ID to search for"
-        required: true
-        type: "string"
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
+        - name: keyId
+          in: path
+          description: Key ID to look for
+          required: true
+          type: string
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: obfuscate
+          in: query
+          description: >-
+            Add obfuscated private key as part of encoded data, relevant for PKI
+            keys only
+          required: false
+          type: boolean
       responses:
-        200:
-          description: "OK"
+        '200':
+          description: OK
           schema:
-            $ref: "#/definitions/KeyInfo"
+            $ref: '#/definitions/Key'
       security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/mac:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/keys/{keyId}/verify':
     post:
       tags:
-      - "Keys"
-      summary: "Create a Message Authentication Code (MAC) for a message using a\
-        \ key"
-      description: "Generate MAC for a message. MAC mode is provided as a parameter.\
-        \ AES keys support GMAC and CMAC. HMAC keys support HMAC."
-      operationId: "createMacWithKey"
+        - Keys
+      summary: Verify a signature using a key
+      description: >-
+        Verifies a signature value. Supports the same parameters as the signing
+        option.
+      operationId: verifyWithKey
       consumes:
-      - "application/json"
+        - application/json
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "Key used for MAC"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "MAC data"
-        required: false
-        schema:
-          $ref: "#/definitions/MACSignData"
-      responses:
-        200:
-          description: "OK. Returns the generated Message Authentication Code"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: keyId
+          in: path
+          description: Certificate used for verification
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: TODO
+          required: false
           schema:
-            $ref: "#/definitions/Mac"
-      security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/macVerify:
-    post:
-      tags:
-      - "Keys"
-      summary: "Verify a Message Authentication Code (MAC) using a key"
-      description: "Verifies a MAC value. Supports the same parameters as the MAC\
-        \ option."
-      operationId: "verifyMacWithKey"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "Key used for verification"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Mac verify data"
-        required: false
-        schema:
-          $ref: "#/definitions/MACVerifyData"
+            $ref: '#/definitions/VerifyData'
       responses:
-        200:
-          description: "OK. Verified Successfully"
-        400:
-          description: "Verification failed"
+        '200':
+          description: OK. Signature verified successfully
+        '400':
+          description: Verification failed
       security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/seal:
-    post:
+        - basicAuth: []
+        - Authorization: []
+  /api/v1/secrets:
+    get:
       tags:
-      - "Keys"
-      summary: "Seal clear text into cipher text with an existing key"
-      description: "Sealing can be done for data of any size. The data is both encrypted\
-        \ and signed for cipher text integrity."
-      operationId: "sealWithKey"
-      consumes:
-      - "application/json"
+        - Secrets
+      summary: List all secrets in a partition
+      description: Return a list of all secrets in a partition
+      operationId: listSecrets
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "ID of the key used for encryption"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Data to seal"
-        required: false
-        schema:
-          $ref: "#/definitions/SealData"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
       responses:
-        200:
-          description: "OK"
+        '200':
+          description: OK
           schema:
-            $ref: "#/definitions/SealedCipher"
+            type: array
+            items:
+              $ref: '#/definitions/Secret'
       security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/sign:
+        - basicAuth: []
+        - Authorization: []
+  /api/v1/secrets/file:
     post:
       tags:
-      - "Keys"
-      summary: "Sign a message using a key"
-      description: "Hash and sign a given message. If requested, it can also assume the\
-        \ input is a hash value and just sign it. Different modes are supported as\
-        \ parameters."
-      operationId: "signWithKey"
+        - Secrets
+      summary: Adds a new secret
+      description: Add new secret data with label
+      operationId: addFileSecret
       consumes:
-      - "application/json"
+        - multipart/form-data
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "Key used for signing"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Data to sign"
-        required: false
-        schema:
-          $ref: "#/definitions/SignData"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: newSecret
+          in: formData
+          description: secret data
+          required: true
+          type: file
+        - name: id
+          in: formData
+          description: secret id
+          required: true
+          type: string
+        - name: description
+          in: formData
+          description: key description
+          required: false
+          type: string
       responses:
-        200:
-          description: "OK"
+        '200':
+          description: successful operation
           schema:
-            $ref: "#/definitions/Signature"
-      security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/unseal:
-    post:
-      tags:
-      - "Keys"
-      summary: "Unseal a value using a key"
-      description: "Data integrity is verified and data is decrypted"
-      operationId: "unSealWithKey"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "The key used for decryption"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Data to unseal"
-        required: false
-        schema:
-          $ref: "#/definitions/UnSealData"
-      responses:
-        200:
-          description: "OK. Returns encoded clear text according to request parameters"
+            $ref: '#/definitions/Secret'
+        '201':
+          description: OK
           schema:
-            $ref: "#/definitions/ClearText"
-        400:
-          description: "Authentication encryption failure"
+            $ref: '#/definitions/Secret'
+        '409':
+          description: Secret with this ID already exists
       security:
-      - basicAuth: []
-  /api/v1/keys/{keyId}/verify:
+        - basicAuth: []
+        - Authorization: []
+  /api/v1/secrets/text:
     post:
       tags:
-      - "Keys"
-      summary: "Verify a signature using a key"
-      description: "Verifies a signature value. Supports the same parameters as the\
-        \ signing option."
-      operationId: "verifyWithKey"
+        - Secrets
+      summary: Adds a new secret
+      description: Add new secret data with label
+      operationId: addTextSecret
       consumes:
-      - "application/json"
+        - application/json
       produces:
-      - "application/json"
+        - application/json
       parameters:
-      - name: "partitionId"
-        in: "query"
-        description: "Partition ID"
-        required: false
-        type: "string"
-      - name: "keyId"
-        in: "path"
-        description: "Certificate used for verification"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Data to verify"
-        required: false
-        schema:
-          $ref: "#/definitions/VerifyData"
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - in: body
+          name: body
+          description: newSecret
+          required: false
+          schema:
+            $ref: '#/definitions/NewSecret'
       responses:
-        200:
-          description: "OK. Signature verified successfully"
-        400:
-          description: "Verification failed"
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/Secret'
+        '201':
+          description: OK
+          schema:
+            $ref: '#/definitions/Secret'
+        '409':
+          description: Secret with this ID already exists
       security:
-      - basicAuth: []
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/secrets/{secretId}':
+    get:
+      tags:
+        - Secrets
+      summary: Get the info of an existing secret
+      description: Return the value of a secret
+      operationId: getSecret
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: secretId
+          in: path
+          description: Secret ID to look for
+          required: true
+          type: string
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Secret'
+      security:
+        - basicAuth: []
+        - Authorization: []
+    delete:
+      tags:
+        - Secrets
+      summary: Deletes a secret
+      description: Deletes a secret by its label/ID
+      operationId: deleteSecret
+      produces:
+        - application/json
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: secretId
+          in: path
+          description: Secret ID to delete
+          required: true
+          type: string
+      responses:
+        '200':
+          description: OK
+      security:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/secrets/{secretId}/file':
+    get:
+      tags:
+        - Secrets
+      summary: Get the value of an existing secret
+      description: Return the value of a secret
+      operationId: getSecretFileData
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - application/octet-stream
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: secretId
+          in: path
+          description: Secret ID to look for
+          required: true
+          type: string
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: file
+      security:
+        - basicAuth: []
+        - Authorization: []
+    put:
+      tags:
+        - Secrets
+      summary: Update existing secret
+      description: Update existing secret
+      operationId: updateFileSecret
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: secretId
+          in: path
+          description: Secret ID
+          required: true
+          type: string
+        - name: newSecret
+          in: formData
+          description: secret data
+          required: true
+          type: file
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Secret'
+      security:
+        - basicAuth: []
+        - Authorization: []
+  '/api/v1/secrets/{secretId}/text':
+    get:
+      tags:
+        - Secrets
+      summary: Get the value of an existing secret
+      description: Return the value of a secret
+      operationId: getSecretTextData
+      consumes:
+        - application/json
+      produces:
+        - application/json
+        - text/plain
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: secretId
+          in: path
+          description: Secret ID to look for
+          required: true
+          type: string
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: string
+      security:
+        - basicAuth: []
+        - Authorization: []
+    put:
+      tags:
+        - Secrets
+      summary: Update existing secret
+      description: Update existing secret
+      operationId: updateTextSecret
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: partitionId
+          in: query
+          description: Partition ID
+          required: false
+          type: string
+        - name: secretId
+          in: path
+          description: Secret ID
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: updatedSecret
+          required: false
+          schema:
+            $ref: '#/definitions/UpdatedSecret'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Secret'
+      security:
+        - basicAuth: []
+        - Authorization: []
 securityDefinitions:
+  Authorization:
+    description: >-
+      For accessing the API a valid JWT token must be passed in all the queries
+      in the 'Authorization' header.
+
+      A valid JWT token is generated by the API and retourned as answer of a
+      call to the route /login giving a valid user and password.
+
+      The following syntax must be used in the 'Authorization' header :
+             Bearer: xxxxxx.yyyyyyy.zzzzzz
+    type: apiKey
+    name: Authorization
+    in: header
   basicAuth:
-    type: "basic"
+    type: basic
 definitions:
   Aad:
-    type: "object"
+    type: object
     required:
-    - "value"
+      - value
     properties:
       value:
-        type: "string"
-        description: "Authentication data"
+        type: string
+        description: Authentication data
       encoding:
-        type: "string"
-        description: "Authentication data encoding"
+        type: string
+        description: Authentication data encoding
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
+          - PLAIN
+          - BASE64
+          - HEX
+  AlternativeNames:
+    type: object
+    required:
+      - isCritical
+      - uid
+    properties:
+      names:
+        type: array
+        items:
+          type: string
+      uid:
+        type: string
+        description: Extension UID
+      isCritical:
+        type: boolean
+        description: Is Extension Critical
+    description: Certificate x509 extension
   AsymmetricCryptoParams:
-    type: "object"
+    type: object
     properties:
       padding:
-        description: "The padding information"
-        $ref: "#/definitions/Padding"
+        description: the padding information
+        $ref: '#/definitions/Padding'
       hash:
-        type: "string"
-        description: "The hash type"
+        type: string
+        description: the hash type
         enum:
-        - "SHA1"
-        - "SHA256"
-        - "SHA384"
-        - "SHA512"
-  Cipher:
-    type: "object"
+          - SHA1
+          - SHA256
+          - SHA384
+          - SHA512
+  AuthorityKeyIdentifier:
+    type: object
     required:
-    - "cipherTextBase64"
+      - isCritical
+      - uid
+    properties:
+      uid:
+        type: string
+        description: Extension UID
+      isCritical:
+        type: boolean
+        description: Is Extension Critical
+      keyId:
+        type: string
+        readOnly: true
+      authNames:
+        type: array
+        items:
+          type: string
+      serialNumber:
+        type: string
+    description: Certificate x509 extension
+  BasicConstraints:
+    type: object
+    required:
+      - isCritical
+      - uid
+    properties:
+      uid:
+        type: string
+        description: Extension UID
+      isCritical:
+        type: boolean
+        description: Is Extension Critical
+      pathLen:
+        type: integer
+        format: int32
+      isCa:
+        type: boolean
+    description: Certificate x509 extension
+  CertificateInfo:
+    type: object
+    required:
+      - id
+      - isCa
+      - isSelfSigned
+      - issuer
+      - pkInfo
+      - serial
+      - signature
+      - signatureAlgorithm
+      - subject
+      - uid
+      - validFrom
+      - validUntil
+      - version
+    properties:
+      sha1:
+        type: string
+      id:
+        type: string
+        example: my-certificate
+        description: Certificate identifier label
+      uid:
+        type: string
+      version:
+        type: string
+        example: V3
+        description: Certificate version
+      serial:
+        type: string
+        example: 185fb61e97f55b19
+        description: Certificate serial number
+      signatureAlgorithm:
+        type: string
+        example: sha256RSA
+        description: Signing algorithm used for signing this certificate
+      issuer:
+        type: string
+        description: The CA that signed this certificate
+      validFrom:
+        type: string
+        description: Date of of validity period start for this certificate
+      validUntil:
+        type: string
+        description: Date of of validity period end for this certificate
+      subject:
+        type: string
+      pkInfo:
+        $ref: '#/definitions/PKInfoType'
+      basicConstraints:
+        description: Basic Constraints Extension
+        $ref: '#/definitions/BasicConstraints'
+      subjectKeyIdentifier:
+        description: Subject Key Identifier Extension
+        $ref: '#/definitions/SubjectKeyIdentifier'
+      authorityKeyIdentifier:
+        description: Authority Key Identifier Extension
+        $ref: '#/definitions/AuthorityKeyIdentifier'
+      subjectAlternativeNames:
+        description: Subject Alternative Names Extension
+        $ref: '#/definitions/AlternativeNames'
+      issuerAlternativeNames:
+        description: Issuer Alternative Names Extension
+        $ref: '#/definitions/AlternativeNames'
+      extendedKeyUsage:
+        description: Extended Key Usage Extension
+        $ref: '#/definitions/ExtendedKeyUsage'
+      signature:
+        type: string
+        description: CA signature value for this certificate
+      isCa:
+        type: boolean
+        description: Determines if this certificate is a CA certificate
+      isSelfSigned:
+        type: boolean
+        description: Determines if this certificate is a self signed certificate
+    description: Certificate public information
+  Cipher:
+    type: object
+    required:
+      - cipherTextBase64
     properties:
       cipherTextBase64:
-        type: "string"
-        description: "base64 encoded encrypted data"
+        type: string
+        description: base64 encoded encrypted data
         minLength: 1
       ivBase64:
-        type: "string"
-        description: "base64 encoded initialization vector"
-    description: "Includes encrypted data"
+        type: string
+        description: base64 encoded Initialize Vector
+    description: Includes encrypted data
   ClearText:
-    type: "object"
+    type: object
     properties:
       clearText:
-        type: "string"
+        type: string
   DecryptData:
-    type: "object"
+    type: object
     required:
-    - "cipher"
+      - cipher
     properties:
       aSymmetricParams:
-        description: "Asymmetric cryptographic parameters for asymmetric keys"
-        $ref: "#/definitions/AsymmetricCryptoParams"
+        description: Asymmetric cryptographic parameters for symmetric keys
+        $ref: '#/definitions/AsymmetricCryptoParams'
       symmetricParams:
-        description: "Symmetric cryptographic parameters for symmetric keys"
-        $ref: "#/definitions/SymmetricCryptoParams"
+        description: symmetric cryptographic parameters for symmetric keys
+        $ref: '#/definitions/SymmetricCryptoParams'
       cipher:
-        description: "The cipher to decrypt"
-        $ref: "#/definitions/Cipher"
+        description: the cipher to decrypt
+        $ref: '#/definitions/Cipher'
       outputEncoding:
-        type: "string"
-        description: "The decrypted result encoding"
+        type: string
+        description: the decrypted result encoding
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
-    description: "Input for a decrypt operation"
+          - PLAIN
+          - BASE64
+          - HEX
+    description: Input for a decrypt operation
   Decryptx:
-    type: "object"
+    type: object
     required:
-    - "encrypted"
+      - encrypted
     properties:
       encrypted:
-        type: "array"
+        type: array
         items:
-          $ref: "#/definitions/Cipher"
+          $ref: '#/definitions/Cipher'
       params:
-        $ref: "#/definitions/SymmetricCryptoParams"
+        $ref: '#/definitions/SymmetricCryptoParams'
       outputEncoding:
-        type: "string"
+        type: string
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
-    description: "Input for multi-decrypt operation"
+          - PLAIN
+          - BASE64
+          - HEX
+    description: Input for multi decrypt operation
   ECCKeyInfoType:
-    type: "object"
+    type: object
     required:
-    - "curve"
-    - "ecPoint"
+      - curve
+      - ecPoint
     properties:
       curve:
-        type: "string"
+        type: string
         enum:
-        - "P256"
-        - "P384"
-        - "P521"
-        - "SECP_256K_1"
+          - P256
+          - P384
+          - P521
+          - SECP_256K_1
       ecPoint:
-        type: "string"
-        description: "Encoded public key (EC point)"
-    description: "Details of ECC public key"
+        type: string
+        description: Encoded public key (EC point)
+    description: Details of ECC public key
   EncryptData:
-    type: "object"
+    type: object
     required:
-    - "clearText"
+      - clearText
     properties:
       aSymmetricParams:
-        description: "Asymmetric cryptographic parameters for asymmetric keys"
-        $ref: "#/definitions/AsymmetricCryptoParams"
+        description: Asymmetric cryptographic parameters for symmetric keys
+        $ref: '#/definitions/AsymmetricCryptoParams'
       symmetricParams:
-        description: "Symmetric cryptographic parameters for symmetric keys"
-        $ref: "#/definitions/SymmetricCryptoParams"
+        description: symmetric cryptographic parameters for symmetric keys
+        $ref: '#/definitions/SymmetricCryptoParams'
       clearText:
-        type: "string"
-        description: "data to encrypt"
+        type: string
+        description: data to encrypt
         minLength: 1
       dataEncoding:
-        type: "string"
-        description: "the input data encoding"
+        type: string
+        description: the input data encoding
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
-    description: "Input for encryption"
+          - PLAIN
+          - BASE64
+          - HEX
+    description: Input for encryption
   Encryptx:
-    type: "object"
+    type: object
     required:
-    - "clearTextItems"
+      - clearTextItems
     properties:
       clearTextItems:
-        type: "array"
-        description: "Array of clear text items to encrypt"
+        type: array
+        description: Array of clearText items to encrypt
         items:
-          type: "string"
+          type: string
       dataEncoding:
-        type: "string"
+        type: string
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
+          - PLAIN
+          - BASE64
+          - HEX
       params:
-        $ref: "#/definitions/SymmetricCryptoParams"
-    description: "Input for encryption of multiple values"
-  Iv:
-    type: "object"
+        $ref: '#/definitions/SymmetricCryptoParams'
+    description: Input for encryption of multiple values
+  ExtendedKeyUsage:
+    type: object
     required:
-    - "value"
+      - isCritical
+      - uid
+    properties:
+      keyUsages:
+        type: array
+        items:
+          type: string
+      uid:
+        type: string
+        description: Extension UID
+      isCritical:
+        type: boolean
+        description: Is Extension Critical
+    description: Certificate x509 extension
+  Iv:
+    type: object
+    required:
+      - value
     properties:
       value:
-        type: "string"
-        description: "Externally provided IV"
+        type: string
+        description: Externally provided IV
       encoding:
-        type: "string"
+        type: string
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
-  Job:
-    type: "object"
-    properties:
-      initiator:
-        type: "string"
-        example: "so@root"
-        readOnly: true
-      id:
-        type: "string"
-        example: "389323ee-3588-416e-94bd-f93ca815762e"
-        readOnly: true
-      title:
-        type: "string"
-        readOnly: true
-      opName:
-        type: "string"
-        example: "PARTITION_CONFIG_SET "
-        readOnly: true
-      createdAt:
-        type: "string"
-        readOnly: true
-      expiresAt:
-        type: "string"
-        readOnly: true
-      opParams:
-        type: "array"
-        readOnly: true
-        items:
-          $ref: "#/definitions/KeyValueEntry"
-      response:
-        type: "string"
-        readOnly: true
-      approvedBy:
-        type: "array"
-        readOnly: true
-        items:
-          type: "string"
-      status:
-        type: "string"
-        readOnly: true
-        enum:
-        - "PENDING_APPROVAL"
-        - "PENDING_EXECUTION"
-        - "DONE"
-        - "EXPIRED"
-      totalRequiredApprovals:
-        type: "integer"
-        format: "int32"
-        readOnly: true
-    description: "An asynchrounous job"
+          - PLAIN
+          - BASE64
+          - HEX
   Key:
-    type: "object"
+    type: object
     properties:
       keyData:
-        type: "string"
-        description: "base64 encoded key data"
+        type: string
+        description: base64 encoded key data
   KeyFormat:
-    type: "object"
+    type: object
     required:
-    - "size"
-    - "type"
+      - type
     properties:
       type:
-        type: "string"
-        description: "key type"
+        type: string
+        description: key type
         enum:
-        - "RSA"
-        - "ECC"
-        - "AES"
-        - "TDES"
-        - "HMAC"
+          - RSA
+          - ECC
+          - AES
+          - TDES
+          - HMAC
+          - SIV
+          - PRF
+          - PWD
       size:
-        type: "integer"
-        format: "int32"
-        example: "for RSA : {2048,3072,4094}"
-        description: "key size"
+        type: integer
+        format: int32
+        example: 'for RSA : {2048,3072,4094}'
+        description: key size
       curve:
-        type: "string"
-        description: "required for ecliptic curve"
+        type: string
+        description: requited for ecliptic curve
         enum:
-        - "P256"
-        - "P384"
-        - "P521"
-        - "SECP_256K_1"
+          - P256
+          - P384
+          - P521
+          - SECP_256K_1
   KeyInfo:
-    type: "object"
+    type: object
     properties:
+      exportable:
+        type: boolean
       id:
-        type: "string"
-        example: "my-key"
-        description: "key identifier label"
+        type: string
+        example: my-key
+        description: key identifier label
         readOnly: true
       uid:
-        type: "string"
-        example: "0x00d78d6a396072e9a0"
-        description: "key identifier"
+        type: string
+        example: '0x00d78d6a396072e9a0'
+        description: key identifier
         readOnly: true
+      description:
+        type: string
+        description: Description for the key
       keyType:
-        type: "string"
-        description: "key type"
+        type: string
+        description: key type
         readOnly: true
         enum:
-        - "RSA"
-        - "ECC"
-        - "AES"
-        - "TDES"
-        - "HMAC"
+          - RSA
+          - ECC
+          - AES
+          - TDES
+          - HMAC
+          - SIV
+          - PRF
+          - PWD
       keySize:
-        type: "integer"
-        format: "int32"
-        description: "key size"
+        type: integer
+        format: int32
+        description: key size
         readOnly: true
       supportedOperations:
-        type: "array"
-        description: "key supported operations"
+        type: array
+        description: key supported operations
         readOnly: true
         items:
-          type: "string"
+          type: string
           enum:
-          - "SIGN"
-          - "VERIFY"
-          - "ENCRYPT"
-          - "DECRYPT"
-          - "WRAP"
-          - "UNWRAP"
-          - "DERIVE"
+            - SIGN
+            - VERIFY
+            - ENCRYPT
+            - DECRYPT
+            - WRAP
+            - UNWRAP
+            - DERIVE
       local:
-        type: "boolean"
-        description: "Was this key created inside EKM or imported?"
+        type: boolean
+        description: Was this key created inside UKC or imported
         readOnly: true
       hasCertificate:
-        type: "boolean"
-        description: "Does this key have a matching certificate in UKC?"
+        type: boolean
+        description: Does this key have a matching certificate in UKC
+        readOnly: true
+      certificateOnly:
+        type: boolean
+        description: Does this certificate not have a matching certificate in UKC
         readOnly: true
       prev:
-        type: "string"
-        description: "Does the key have a previous key (created by renew operation)?"
+        type: string
+        description: Does the key have previous key (created by renew operation)
         readOnly: true
       pkInfo:
-        description: "private key (RSA/ECC) information"
+        description: Private key (RSA/ECC) information
         readOnly: true
-        $ref: "#/definitions/PKInfoType"
-    description: "Key object details"
+        $ref: '#/definitions/PKInfoType'
+      chain:
+        type: array
+        description: Private key (RSA/ECC) information
+        readOnly: true
+        items:
+          $ref: '#/definitions/CertificateInfo'
+    description: Key object details
   KeyProperties:
-    type: "object"
+    type: object
     properties:
       supportedOperations:
-        type: "array"
-        description: "The key supported operations"
+        type: array
+        description: The key Supported operations
         items:
-          type: "string"
+          type: string
           enum:
-          - "SIGN"
-          - "VERIFY"
-          - "ENCRYPT"
-          - "DECRYPT"
-          - "WRAP"
-          - "UNWRAP"
-          - "DERIVE"
+            - SIGN
+            - VERIFY
+            - ENCRYPT
+            - DECRYPT
+            - WRAP
+            - UNWRAP
+            - DERIVE
       description:
-        type: "string"
-        description: "Description for the key"
+        type: string
+        description: Description for the key
       isExportable:
-        type: "boolean"
-        description: "Is the key is exportable?"
-  KeyValueEntry:
-    type: "object"
-    required:
-    - "key"
-    - "value"
-    properties:
-      key:
-        type: "string"
-        minLength: 1
-      value:
-        type: "string"
-    description: "Key value entry"
+        type: boolean
+        description: is key is exportable or not
   Label:
-    type: "object"
+    type: object
     required:
-    - "value"
+      - value
     properties:
       value:
-        type: "string"
+        type: string
       encoding:
-        type: "string"
+        type: string
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
+          - PLAIN
+          - BASE64
+          - HEX
   MACSignData:
-    type: "object"
+    type: object
     required:
-    - "data"
+      - data
     properties:
       data:
-        type: "string"
-        description: "data"
+        type: string
+        description: data
         minLength: 1
       dataEncoding:
-        type: "string"
-        description: "data encoding"
+        type: string
+        description: data encoding
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
+          - PLAIN
+          - BASE64
+          - HEX
       params:
-        $ref: "#/definitions/MacCryptoParams"
-    description: "Input for MAC operation"
+        $ref: '#/definitions/MacCryptoParams'
+    description: Input for MAC operation
   MACVerifyData:
-    type: "object"
+    type: object
     required:
-    - "data"
-    - "mac"
+      - data
+      - mac
     properties:
       data:
-        type: "string"
-        description: "data"
+        type: string
+        description: data
         minLength: 1
       dataEncoding:
-        type: "string"
-        description: "data encoding"
+        type: string
+        description: data encoding
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
+          - PLAIN
+          - BASE64
+          - HEX
       params:
-        $ref: "#/definitions/MacCryptoParams"
+        $ref: '#/definitions/MacCryptoParams'
       mac:
-        description: "MAC value to be verified, encoded as BASE64"
-        $ref: "#/definitions/Mac"
-    description: "Includes data used for MAC verification"
+        description: 'MAC value to be verified, encoded as BASE64'
+        $ref: '#/definitions/Mac'
+    description: Includes data used for MAC verification
   Mac:
-    type: "object"
+    type: object
     properties:
-      macBase64:
-        type: "string"
-        example: "c2Rmc2FkZmFzZGZhIHNkZmFzZGZzMjM0MjM0MzQyIGRmIGFzZGZhIDMz"
-        description: "base64 encoded MAC value"
+      mac:
+        type: string
+        example: c2Rmc2FkZmFzZGZhIHNkZmFzZGZzMjM0MjM0MzQyIGRmIGFzZGZhIDMz
       ivBase64:
-        type: "string"
-        description: "base64 encoded initialization vector"
+        type: string
+        description: base64 encoded Initialize Vector
   MacCryptoParams:
-    type: "object"
+    type: object
     properties:
       mode:
-        type: "string"
-        description: "Mode of operation"
+        type: string
+        description: Mode of operation
         enum:
-        - "GMAC"
-        - "CMAC"
-        - "HMAC"
+          - GMAC
+          - CMAC
+          - HMAC
       iv:
-        description: "Externally provided IV, default encoded in base64"
-        $ref: "#/definitions/Iv"
+        description: 'Externally provided IV, default encoded in BAS64'
+        $ref: '#/definitions/Iv'
       tagLength:
-        type: "integer"
-        format: "int32"
+        type: integer
+        format: int32
   NewGeneratedKey:
-    type: "object"
+    type: object
     required:
-    - "keyFormat"
-    - "keyId"
+      - keyFormat
+      - keyId
     properties:
       keyId:
-        type: "string"
-        description: "An ID for the new key"
+        type: string
+        description: An id for the new key
         minLength: 1
       keyFormat:
-        $ref: "#/definitions/KeyFormat"
+        $ref: '#/definitions/KeyFormat'
       keyProperties:
-        $ref: "#/definitions/KeyProperties"
+        $ref: '#/definitions/KeyProperties'
+  NewSecret:
+    type: object
+    required:
+      - data
+      - id
+    properties:
+      id:
+        type: string
+        example: mySecret1
+        description: An identifier/label for the secret data
+        minLength: 1
+      data:
+        type: string
+        example: My secret data
+        description: The data to keep as secret
+        minLength: 1
+      description:
+        type: string
+        description: The secret description
   OAEPPadding:
-    type: "object"
+    type: object
     properties:
       mgf:
-        type: "string"
+        type: string
         enum:
-        - "SHA1"
-        - "SHA256"
-        - "SHA384"
-        - "SHA512"
+          - SHA1
+          - SHA256
+          - SHA384
+          - SHA512
       label:
-        description: "OAEP label, default encoding as PLAIN"
-        $ref: "#/definitions/Label"
-    description: "OAEP padding parameters"
+        description: 'OAEP label, default encoding as PLAIN'
+        $ref: '#/definitions/Label'
+    description: OAEP padding parameters
   PKInfoType:
-    type: "object"
+    type: object
     properties:
       rsa:
-        $ref: "#/definitions/RSAKeyInfoType"
+        $ref: '#/definitions/RSAKeyInfoType'
       ecc:
-        $ref: "#/definitions/ECCKeyInfoType"
-    description: "Properties of the PKI key"
+        $ref: '#/definitions/ECCKeyInfoType'
+    description: Properties of PKI key
   PSSPadding:
-    type: "object"
+    type: object
     properties:
       mgf:
-        type: "string"
-        description: "The MGF hash algorithm"
+        type: string
+        description: the mgf hash algorithm
         enum:
-        - "SHA1"
-        - "SHA256"
-        - "SHA384"
-        - "SHA512"
+          - SHA1
+          - SHA256
+          - SHA384
+          - SHA512
       saltSize:
-        type: "integer"
-        format: "int32"
-        description: "the salt size"
-    description: "PSS padding parameters"
+        type: integer
+        format: int32
+        description: the salt size
+    description: PSS padding parameters
   Padding:
-    type: "object"
+    type: object
     required:
-    - "type"
+      - type
     properties:
       type:
-        type: "string"
+        type: string
         enum:
-        - "PKCS1"
-        - "OAEP"
-        - "PSS"
+          - PKCS1
+          - OAEP
+          - PSS
       pss:
-        $ref: "#/definitions/PSSPadding"
+        $ref: '#/definitions/PSSPadding'
       oaep:
-        $ref: "#/definitions/OAEPPadding"
-    description: "Crypto operation padding type"
+        $ref: '#/definitions/OAEPPadding'
+    description: Crypto operation padding type
   RSAKeyInfoType:
-    type: "object"
+    type: object
     required:
-    - "modulus"
-    - "publicExponent"
+      - modulus
+      - publicExponent
     properties:
       publicExponent:
-        type: "string"
-        description: "HEX encoded exponent"
+        type: string
+        description: HEX encoded exponent
       modulus:
-        type: "string"
-        description: "HEX encoded modulus"
-    description: "Details of RSA public key"
+        type: string
+        description: HEX encoded modulus
+    description: Details of RSA public key
   SealData:
-    type: "object"
+    type: object
     required:
-    - "clearText"
+      - clearText
     properties:
       clearText:
-        type: "string"
-        description: "Data to seal"
+        type: string
+        description: Data to seal
         minLength: 1
       dataEncoding:
-        type: "string"
-        description: "the data encoding"
+        type: string
+        description: the data encoding
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
+          - PLAIN
+          - BASE64
+          - HEX
   SealedCipher:
-    type: "object"
+    type: object
     required:
-    - "value"
+      - value
     properties:
       value:
-        type: "string"
-        description: "base64 encoded sealed value"
+        type: string
+        description: base64 encoded sealed value
         minLength: 1
-  SignData:
-    type: "object"
+  Secret:
+    type: object
     required:
-    - "data"
+      - id
+    properties:
+      id:
+        type: string
+        example: mySecret1
+        description: An identifier/label for the secret data
+      description:
+        type: string
+        description: The secret description
+        readOnly: true
+      uid:
+        type: string
+        example: '0x00d78d6a396072e9a0'
+        description: secret identifier
+        readOnly: true
+  SignData:
+    type: object
+    required:
+      - data
     properties:
       data:
-        type: "string"
-        description: "data"
+        type: string
+        description: data
       dataEncoding:
-        type: "string"
-        description: "data encoding"
+        type: string
+        description: data encoding
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
+          - PLAIN
+          - BASE64
+          - HEX
       params:
-        description: "the operation parameters"
-        $ref: "#/definitions/AsymmetricCryptoParams"
+        description: the operation parameters
+        $ref: '#/definitions/AsymmetricCryptoParams'
       doHash:
-        type: "boolean"
-        description: "do hash or not"
-    description: "Input for sign operation"
+        type: boolean
+        description: do hash or not
+    description: Input for sign operation
   Signature:
-    type: "object"
+    type: object
     properties:
       signature:
-        type: "string"
-        example: "c2Rmc2FkZmFzZGZhIHNkZmFzZGZzIGRmIGFzZGZhIHNkZmFzZGZhc2Q="
-        description: "base64 encoded signature"
+        type: string
+        example: c2Rmc2FkZmFzZGZhIHNkZmFzZGZzIGRmIGFzZGZhIHNkZmFzZGZhc2Q=
+        description: base64 encoded signature
+  SubjectKeyIdentifier:
+    type: object
+    required:
+      - isCritical
+      - uid
+    properties:
+      uid:
+        type: string
+        description: Extension UID
+      isCritical:
+        type: boolean
+        description: Is Extension Critical
+      keyId:
+        type: string
+        readOnly: true
+    description: Certificate x509 extension
   SymmetricCryptoParams:
-    type: "object"
+    type: object
     properties:
       mode:
-        type: "string"
-        description: "Mode of operation"
+        type: string
+        description: Mode of operation
         enum:
-        - "ECB"
-        - "CBC"
-        - "OFB"
-        - "CFB"
-        - "CTR"
-        - "GCM"
-        - "CCM"
-        - "XTS"
-        - "SIV"
-        - "NISTWRAP"
+          - ECB
+          - CBC
+          - OFB
+          - CFB
+          - CTR
+          - GCM
+          - CCM
+          - XTS
+          - SIV
+          - NISTWRAP
       iv:
-        description: "Externally provided IV, default encoded in base64"
-        $ref: "#/definitions/Iv"
+        description: 'Externally provided IV, default encoded in BAS64'
+        $ref: '#/definitions/Iv'
       aad:
-        description: "Authentication data, default encoded in PLAIN"
-        $ref: "#/definitions/Aad"
+        description: 'Authentication data, default encoded in PLAIN'
+        $ref: '#/definitions/Aad'
       tagLength:
-        type: "integer"
-        format: "int32"
+        type: integer
+        format: int32
   UnSealData:
-    type: "object"
+    type: object
     required:
-    - "cipher"
+      - cipher
     properties:
       cipher:
-        description: "cipher to decrypt"
-        $ref: "#/definitions/SealedCipher"
+        description: cipher to decrypt
+        $ref: '#/definitions/SealedCipher'
       outputEncoding:
-        type: "string"
+        type: string
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
-  VerifyData:
-    type: "object"
+          - PLAIN
+          - BASE64
+          - HEX
+  UpdatedSecret:
+    type: object
     required:
-    - "data"
-    - "signature"
+      - data
     properties:
       data:
-        type: "string"
-        description: "data"
+        type: string
+        example: My secret data
+        description: The data to keep as secret
+        minLength: 1
+  VerifyData:
+    type: object
+    required:
+      - data
+      - signature
+    properties:
+      data:
+        type: string
+        description: data
       dataEncoding:
-        type: "string"
-        description: "data encoding"
+        type: string
+        description: data encoding
         enum:
-        - "PLAIN"
-        - "BASE64"
-        - "HEX"
+          - PLAIN
+          - BASE64
+          - HEX
       params:
-        description: "the operation parameters"
-        $ref: "#/definitions/AsymmetricCryptoParams"
+        description: the operation parameters
+        $ref: '#/definitions/AsymmetricCryptoParams'
       doHash:
-        type: "boolean"
-        description: "Do hash or not"
+        type: boolean
+        description: do hash or not
       signature:
-        description: "Signature, encoded as BAS64"
-        $ref: "#/definitions/Signature"
-    description: "Includes data used for signature verification"
-# Added by API Auto Mocking Plugin
-host: ukcep.your_domain
-basePath: 
+        description: 'Signature, encoded as BAS64'
+        $ref: '#/definitions/Signature'
+    description: Includes data used for signature verification
