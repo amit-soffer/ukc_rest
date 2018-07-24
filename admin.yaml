@@ -4,8 +4,6 @@ info:
     The UKC Administration API allows managing 'Unbound key control'
     configuration and objects.
 
-    __This API is in draft status and is currently being reviewed__
-
 
     # Authentication
 
