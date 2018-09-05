@@ -68,7 +68,7 @@ async function test() {
 
   // list users of new partition
   basicAuth.username = `so@${newPartitionName}`;
-  let users = await usersApi.listUser(newPartitionName);
+  let users = await usersApi.listUsers(newPartitionName);
   log(`${newPartitionName} partition users: ${users.map(u => u.name)}`);
 
   // adding an so
