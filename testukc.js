@@ -4,7 +4,7 @@
  * It will connect to a UKC server, create a new partition and add a user
  */
 
-global.File = require("file-class");
+global.File = require("fs");
 
 const UkcAdminApi = require('ukc_admin_api');
 const defaultClient = UkcAdminApi.ApiClient.instance;
