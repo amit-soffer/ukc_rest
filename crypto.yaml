@@ -148,7 +148,7 @@ info:
     email: support@unboundtech.com
   license: {
     name: '',
-    url: http://www.unboundtech.com
+    url: 'http://www.unboundtech.com'
   }
 tags:
 - name: "Keys"
