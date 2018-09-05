@@ -3,6 +3,9 @@
  * This is a simple program that demonstrates the use of UKC REST Api
  * It will connect to a UKC server, create a new partition and add a user
  */
+
+global.File = require("file-class");
+
 const UkcAdminApi = require('ukc_admin_api');
 const defaultClient = UkcAdminApi.ApiClient.instance;
 // set server base url here
