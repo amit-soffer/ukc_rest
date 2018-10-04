@@ -139,7 +139,7 @@ info:
     - 404 - Resource not found. Verify that the URL exists.
 
     - 401 - Unauthorized
-  version: 2.0.1807
+  version: 2.0.1809
   title: Unbound Key Control Server
   termsOfService: ''
   contact:
@@ -357,6 +357,41 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+    put:
+      tags:
+      - "Keys"
+      summary: "Updating existing key"
+      description: ""
+      operationId: "updateKey"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "keyId"
+        in: "path"
+        description: "Key id"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Key updates"
+        required: false
+        schema:
+          $ref: "#/definitions/KeyUpdates"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/KeyInfo"
+      security:
+      - basicAuth: []
+      - Authorization: []
     delete:
       tags:
       - "Keys"
@@ -463,6 +498,46 @@ paths:
               $ref: "#/definitions/ClearText"
         400:
           description: "Authentication encryption failure"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/keys/{keyId}/derive:
+    post:
+      tags:
+      - "Keys"
+      summary: "Unwrap and import a new key"
+      description: ""
+      operationId: "derive"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "keyId"
+        in: "path"
+        description: "The key used for derive"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Derivation data"
+        required: false
+        schema:
+          $ref: "#/definitions/DeriveData"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/KeyInfo"
+        201:
+          description: "New key derived successfully"
+          schema:
+            $ref: "#/definitions/KeyInfo"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1098,6 +1173,41 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+    put:
+      tags:
+      - "Secrets"
+      summary: "Updates existing secret properties"
+      description: ""
+      operationId: "updateSecret"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "secretId"
+        in: "path"
+        description: "Secret id"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Secret updates"
+        required: false
+        schema:
+          $ref: "#/definitions/SecretUpdates"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Secret"
+      security:
+      - basicAuth: []
+      - Authorization: []
     delete:
       tags:
       - "Secrets"
@@ -1353,6 +1463,19 @@ definitions:
       isCa:
         type: "boolean"
     description: "Certificate x509 extension"
+  BipDerivationParams:
+    type: "object"
+    required:
+    - "childNumber"
+    - "hardened"
+    properties:
+      childNumber:
+        type: "integer"
+        format: "int32"
+        description: "child number"
+      hardened:
+        type: "boolean"
+        description: "Is hardened or not"  
   CertificateInfo:
     type: "object"
     required:
@@ -1362,6 +1485,7 @@ definitions:
     - "issuer"
     - "pkInfo"
     - "serial"
+    - "sha1Thumbprint"
     - "signature"
     - "signatureAlgorithm"
     - "subject"
@@ -1378,6 +1502,12 @@ definitions:
         type: "string"
       sha1Thumbprint:
         type: "string"
+        description: "certificate sha1"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
       version:
         type: "string"
         example: "V3"
@@ -1449,6 +1579,17 @@ definitions:
     properties:
       clearText:
         type: "string"
+  ConcatDerivationParams:
+    type: "object"
+    required:
+    - "data"
+    properties:
+      data:
+        type: "string"
+        description: "Derivation data"
+      isPrefix:
+        type: "boolean"
+        description: "Is prefix mode or not (suffix)"           
   DecryptData:
     type: "object"
     required:
@@ -1489,6 +1630,66 @@ definitions:
         - "BASE64"
         - "HEX"
     description: "Input for multi decrypt operation"
+  DeriveData:
+    type: "object"
+    required:
+    - "derivationMode"
+    - "newGeneratedKey"
+    properties:
+      newGeneratedKey:
+        $ref: "#/definitions/NewGeneratedKey"
+      derivationMode:
+        type: "string"
+        description: "Derivation Mode"
+        enum:
+        - "CONCAT"
+        - "HASH"
+        - "BIP"
+      hash:
+        type: "string"
+        description: "Hash algorithm"
+        enum:
+        - "SHA1"
+        - "SHA256"
+        - "SHA384"
+        - "SHA512"
+      bipDerivationParams:
+        description: "Bip derivation parameters"
+        $ref: "#/definitions/BipDerivationParams"
+      concatDerivationParams:
+        description: "Concat derivation parameters"
+        $ref: "#/definitions/ConcatDerivationParams"
+    description: "Input for a derive operation"
+  ECCBipKeyInfo:
+    type: "object"
+    properties:
+      level:
+        type: "string"
+        format: "byte"
+        description: "level (0 for master)"
+        readOnly: true
+      childNumber:
+        type: "integer"
+        format: "int32"
+        description: "child number"
+        readOnly: true
+      hardened:
+        type: "boolean"
+        description: "is hardened or not"
+        readOnly: true
+      chainCode:
+        type: "string"
+        description: "BASE64 chain code"
+        readOnly: true
+      parentUid:
+        type: "string"
+        description: "the parent uid"
+        readOnly: true
+      parentFingerprint:
+        type: "integer"
+        format: "int32"
+        description: "parent fingerprint (The first 32 bits of the identifier)"
+        readOnly: true
   ECCKeyInfoType:
     type: "object"
     required:
@@ -1505,6 +1706,9 @@ definitions:
       ecPoint:
         type: "string"
         description: "Encoded public key (EC point)"
+      eccBipKeyInfo:
+        description: "ECC BIP info"
+        $ref: "#/definitions/ECCBipKeyInfo"
     description: "Details of ECC public key"
   EncryptData:
     type: "object"
@@ -1616,6 +1820,9 @@ definitions:
         - "P384"
         - "P521"
         - "SECP_256K_1"
+      offlineEcdsaParams:
+        description: "Required for offline ECDSA keys"
+        $ref: "#/definitions/OfflineEcdsaParams"
   KeyInfo:
     type: "object"
     properties:
@@ -1655,11 +1862,11 @@ definitions:
       certificateOnly:
         type: "boolean"
         description: "Does this certificate not have a matching certificate in\
-          \ EKM?"
+          \ UKC"
         readOnly: true
       prev:
         type: "string"
-        description: "Does the key have previous key (created by a move operation)?"
+        description: "Does the key have previous key (created by a move operation)"
         readOnly: true
       pkInfo:
         description: "Private key (RSA/ECC) information"
@@ -1701,7 +1908,7 @@ definitions:
           - "DERIVE"
       trusted:
         type: "boolean"
-        description: "Is the key trusted?"
+        description: "Is the key trusted"
       exportType:
         type: "string"
         enum:
@@ -1709,6 +1916,15 @@ definitions:
         - "WRAPPED"
         - "WRAPPED_WITH_TRUSTED"
         - "NON_EXPORTABLE"
+  KeyUpdates:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        description: "The key ID"
+      description:
+        type: "string"
+        description: "The key description"
   Label:
     type: "object"
     required:
@@ -1849,6 +2065,22 @@ definitions:
         description: "OAEP label, default encoding as PLAIN"
         $ref: "#/definitions/Label"
     description: "OAEP padding parameters"
+  OfflineEcdsaParams:
+    type: "object"
+    required:
+    - "keepKeyMaterial"
+    - "paillierKey"
+    properties:
+      backup:
+        type: "string"
+        description: "BASE64 ECDSA offline backup"
+        readOnly: true
+      paillierKey:
+        type: "string"
+        description: "ECDSA offline Paillier key public key"
+      keepKeyMaterial:
+        type: "boolean"
+        description: "Save the key material"
   PKInfoType:
     type: "object"
     properties:
@@ -1953,6 +2185,15 @@ definitions:
         type: "string"
         description: "Last update date"
         readOnly: true
+  SecretUpdates:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        description: "The key ID"
+      description:
+        type: "string"
+        description: "The key description"
   SignData:
     type: "object"
     required:

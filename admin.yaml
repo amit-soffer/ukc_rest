@@ -142,7 +142,7 @@ info:
     - 404 - Resource not found. Verify that the URL exists.
 
     - 401 - Unauthorized
-  version: 2.0.1807
+  version: 2.0.1809
   title: UKC Admin API
   termsOfService: ''
   contact: {
@@ -186,25 +186,6 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
-  /api/v1/ca.cer:
-    get:
-      tags:
-      - "General"
-      summary: "Return UKC root CA certificate"
-      description: "Download the root CA certificate of UKC"
-      operationId: "getCaCert"
-      produces:
-      - "application/x-x509-ca-cert"
-      - "application/json"
-      parameters: []
-      responses:
-        200:
-          description: "OK"
-          schema:
-            type: "file"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/clients:
     get:
       tags:
@@ -219,6 +200,11 @@ paths:
         in: "query"
         required: false
         type: "string"
+      - name: "detailed"
+        in: "query"
+        description: "Detailed"
+        required: false
+        type: "boolean"                       
       responses:
         200:
           description: "OK"
@@ -266,6 +252,29 @@ paths:
             $ref: "#/definitions/Job"
         409:
           description: "Object already exists"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/clients/alerts:
+    get:
+      tags:
+      - "Clients"
+      summary: "Get client alerts summary"
+      description: ""
+      operationId: "getAlertsSummary"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/AlertsSummary"
       security:
       - basicAuth: []
       - Authorization: []
@@ -328,6 +337,11 @@ paths:
         description: "Partition ID"
         required: false
         type: "string"
+      - name: "detailed"
+        in: "query"
+        description: "Detailed"
+        required: false
+        type: "boolean"
       responses:
         200:
           description: "OK"
@@ -365,6 +379,34 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/clients/{clientId}/alerts:
+    get:
+      tags:
+      - "Clients"
+      summary: "Get details of an existing client"
+      description: "Return details of a client"
+      operationId: "getClientAlerts"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "clientId"
+        in: "path"
+        description: "Client ID"
+        required: true
+        type: "string"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Alert"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/health:
     get:
       tags:
@@ -390,7 +432,12 @@ paths:
       operationId: "getSystemInfo"
       produces:
       - "application/json"
-      parameters: []
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
       responses:
         200:
           description: "OK"
@@ -859,6 +906,25 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/server-ca.p7b:
+    get:
+      tags:
+      - "General"
+      summary: "Return UKC root CA certificate"
+      description: "Download the root CA certificate of UKC"
+      operationId: "getCaCert"
+      produces:
+      - "application/x-pkcs7-certificates"
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "file"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/servers/new/auxiliary:
     get:
       tags:
@@ -1053,6 +1119,106 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/system/certificates:
+    get:
+      tags:
+      - "System"
+      summary: "Get the server and root ca certificates"
+      description: ""
+      operationId: "getSystemCertificates"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "detailed"
+        in: "query"
+        description: "Detailed"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/SystemCertificate"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/system/certificates/alerts:
+    get:
+      tags:
+      - "System"
+      summary: "Get the server and root ca certificates"
+      description: ""
+      operationId: "getSystemAlerts"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/AlertsSummary"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/system/certificates/{certificateId}:
+    get:
+      tags:
+      - "System"
+      summary: "Get a specific system certificate"
+      description: ""
+      operationId: "getSystemCertificate"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "certificateId"
+        in: "path"
+        description: "Certificate ID"
+        required: true
+        type: "string"
+      - name: "detailed"
+        in: "query"
+        description: "Detailed"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/SystemCertificate"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/system/certificates/{certificateId}/alerts:
+    get:
+      tags:
+      - "System"
+      summary: "Get a specific system certificate alert"
+      description: ""
+      operationId: "getSystemCertificateAlerts"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "certificateId"
+        in: "path"
+        description: "Certificate ID"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/SystemCertificate"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/system/settings:
     get:
       tags:
@@ -1193,6 +1359,42 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/users/{soId}/recover:
+    put:
+      tags:
+      - "Users"
+      summary: "Recover SO password"
+      description: "Recover SO password. Root SO can recover for other SOs."
+      operationId: "recoverSoPassword"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Password"
+        required: false
+        schema:
+          $ref: "#/definitions/Password"
+      - name: "soId"
+        in: "path"
+        description: "So ID"
+        required: true
+        type: "string"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "SO password recovered successfully"
+        400:
+          description: "New password does not comply with password policy rules"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/users/{userId}:
     get:
       tags:
@@ -1307,6 +1509,192 @@ definitions:
         description: "Client activation code"
         minLength: 1
     description: "ActivationCode"
+  Alert:
+    type: "object"
+    properties:
+      alertType:
+        type: "string"
+        readOnly: true
+        enum:
+        - "CERT_ABOUT_TO_EXPIRE"
+        - "CERT_EXPIRED"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
+      title:
+        type: "string"
+        readOnly: true
+  AlertsSummary:
+    type: "object"
+    properties:
+      category:
+        type: "string"
+        readOnly: true
+        enum:
+        - "CLIENTS"
+        - "SYSTEM"
+      alertType:
+        type: "string"
+        readOnly: true
+        enum:
+        - "CERT_ABOUT_TO_EXPIRE"
+        - "CERT_EXPIRED"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
+      counter:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      title:
+        type: "string"
+        readOnly: true
+  AlternativeNames:
+    type: "object"
+    required:
+    - "isCritical"
+    - "uid"
+    properties:
+      names:
+        type: "array"
+        items:
+          type: "string"
+      uid:
+        type: "string"
+        description: "Extension UID"
+      isCritical:
+        type: "boolean"
+        description: "Is Extension Critical"
+    description: "Certificate x509 extension"
+  AuthorityKeyIdentifier:
+    type: "object"
+    required:
+    - "isCritical"
+    - "uid"
+    properties:
+      uid:
+        type: "string"
+        description: "Extension UID"
+      isCritical:
+        type: "boolean"
+        description: "Is Extension Critical"
+      keyId:
+        type: "string"
+        readOnly: true
+      authNames:
+        type: "array"
+        items:
+          type: "string"
+      serialNumber:
+        type: "string"
+    description: "Certificate x509 extension"
+  BasicConstraints:
+    type: "object"
+    required:
+    - "isCritical"
+    - "uid"
+    properties:
+      uid:
+        type: "string"
+        description: "Extension UID"
+      isCritical:
+        type: "boolean"
+        description: "Is Extension Critical"
+      pathLen:
+        type: "integer"
+        format: "int32"
+      isCa:
+        type: "boolean"
+    description: "Certificate x509 extension"
+  CertificateInfo:
+    type: "object"
+    required:
+    - "id"
+    - "isCa"
+    - "isSelfSigned"
+    - "issuer"
+    - "pkInfo"
+    - "serial"
+    - "sha1Thumbprint"
+    - "signature"
+    - "signatureAlgorithm"
+    - "subject"
+    - "uid"
+    - "validFrom"
+    - "validUntil"
+    - "version"
+    properties:
+      id:
+        type: "string"
+        example: "my-certificate"
+        description: "Certificate identifier label"
+      uid:
+        type: "string"
+      sha1Thumbprint:
+        type: "string"
+        description: "certificate sha1"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
+      version:
+        type: "string"
+        example: "V3"
+        description: "Certificate version"
+      serial:
+        type: "string"
+        example: "185fb61e97f55b19"
+        description: "Certificate serial number"
+      signatureAlgorithm:
+        type: "string"
+        example: "sha256RSA"
+        description: "Sigining algorithm used for signing this certificate"
+      issuer:
+        type: "string"
+        description: "The CA that signed this certificate"
+      validFrom:
+        type: "string"
+        description: "Start date of validity period for this certificate"
+      validUntil:
+        type: "string"
+        description: "End date of validity period for this certificate"
+      subject:
+        type: "string"
+      pkInfo:
+        $ref: "#/definitions/PKInfoType"
+      basicConstraints:
+        description: "Basic Constraints Extension"
+        $ref: "#/definitions/BasicConstraints"
+      subjectKeyIdentifier:
+        description: "Subject Key Identifier Extension"
+        $ref: "#/definitions/SubjectKeyIdentifier"
+      authorityKeyIdentifier:
+        description: "Authority Key Identifier Extension"
+        $ref: "#/definitions/AuthorityKeyIdentifier"
+      subjectAlternativeNames:
+        description: "Subject Alternative Names Extension"
+        $ref: "#/definitions/AlternativeNames"
+      issuerAlternativeNames:
+        description: "Issuer Alternative Names Extension"
+        $ref: "#/definitions/AlternativeNames"
+      extendedKeyUsage:
+        description: "Extended Key Usage Extension"
+        $ref: "#/definitions/ExtendedKeyUsage"
+      signature:
+        type: "string"
+        description: "CA signature value for this certificate"
+      isCa:
+        type: "boolean"
+        description: "Determines if this certificate is a CA certificate"
+      isSelfSigned:
+        type: "boolean"
+        description: "Determines if this certificate is a self-signed certificate"
+    description: "Certificate public information"
   Client:
     type: "object"
     properties:
@@ -1353,7 +1741,89 @@ definitions:
       allowNat:
         type: "boolean"
         description: "Allow client use NAT"
+      certificateInfo:
+        description: "Client certificate info"
+        $ref: "#/definitions/CertificateInfo"
+      certExpiresAt:
+        type: "string"
+        description: "Client certificate expiration date"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
+      version:
+        type: "string"
+        description: "Client version"
     description: "A UKC new client"
+  ECCBipKeyInfo:
+    type: "object"
+    properties:
+      level:
+        type: "string"
+        format: "byte"
+        description: "level (0 for master)"
+        readOnly: true
+      childNumber:
+        type: "integer"
+        format: "int32"
+        description: "child number"
+        readOnly: true
+      hardened:
+        type: "boolean"
+        description: "is hardened or not"
+        readOnly: true
+      chainCode:
+        type: "string"
+        description: "BASE64 chain code"
+        readOnly: true
+      parentUid:
+        type: "string"
+        description: "the parent uid"
+        readOnly: true
+      parentFingerprint:
+        type: "integer"
+        format: "int32"
+        description: "parent fingerprint (The first 32 bits of the identifier)"
+        readOnly: true
+  ECCKeyInfoType:
+    type: "object"
+    required:
+    - "curve"
+    - "ecPoint"
+    - "eccBipKeyInfo"
+    properties:
+      curve:
+        type: "string"
+        enum:
+        - "P256"
+        - "P384"
+        - "P521"
+        - "SECP_256K_1"
+      ecPoint:
+        type: "string"
+        description: "Encoded public key (EC point)"
+      eccBipKeyInfo:
+        description: "ECC bip info"
+        $ref: "#/definitions/ECCBipKeyInfo"
+    description: "Details of ECC public key"
+  ExtendedKeyUsage:
+    type: "object"
+    required:
+    - "isCritical"
+    - "uid"
+    properties:
+      keyUsages:
+        type: "array"
+        items:
+          type: "string"
+      uid:
+        type: "string"
+        description: "Extension UID"
+      isCritical:
+        type: "boolean"
+        description: "Is Extension Critical"
+    description: "Certificate x509 extension"
   Job:
     type: "object"
     properties:
@@ -1453,7 +1923,9 @@ definitions:
         - "MINUTES"
         - "HOURS"
         - "DAYS"
+        - "MONTHS"
         - "YEARS"
+        - "CHARACTERS"
     description: "Key value entry"
   NewAndExistingPassword:
     type: "object"
@@ -1613,6 +2085,14 @@ definitions:
         - "SO"
         - "USER"
     description: "A UKC new user"
+  PKInfoType:
+    type: "object"
+    properties:
+      rsa:
+        $ref: "#/definitions/RSAKeyInfoType"
+      ecc:
+        $ref: "#/definitions/ECCKeyInfoType"
+    description: "Properties of the PKI key"
   Pair:
     type: "object"
     properties:
@@ -1730,6 +2210,19 @@ definitions:
         example: 0
         readOnly: true
     description: "Quorum jobs status"
+  RSAKeyInfoType:
+    type: "object"
+    required:
+    - "modulus"
+    - "publicExponent"
+    properties:
+      publicExponent:
+        type: "string"
+        description: "HEX encoded exponent"
+      modulus:
+        type: "string"
+        description: "HEX encoded modulus"
+    description: "Details of RSA public key"
   RandomEntropyBytes:
     type: "object"
     required:
@@ -1794,7 +2287,126 @@ definitions:
         type: "string"
         description: "The server version"
         readOnly: true
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
+      certificateInfo:
+        description: "The server certificate info"
+        readOnly: true
+        $ref: "#/definitions/CertificateInfo"
     description: "A UKC server"
+  SubjectKeyIdentifier:
+    type: "object"
+    required:
+    - "isCritical"
+    - "uid"
+    properties:
+      uid:
+        type: "string"
+        description: "Extension UID"
+      isCritical:
+        type: "boolean"
+        description: "Is extension critical"
+      keyId:
+        type: "string"
+        readOnly: true
+    description: "Certificate x509 extension"
+  SystemCertificate:
+    type: "object"
+    required:
+    - "id"
+    - "isCa"
+    - "isSelfSigned"
+    - "issuer"
+    - "pkInfo"
+    - "serial"
+    - "sha1Thumbprint"
+    - "signature"
+    - "signatureAlgorithm"
+    - "subject"
+    - "uid"
+    - "validFrom"
+    - "validUntil"
+    - "version"
+    properties:
+      id:
+        type: "string"
+        example: "my-certificate"
+        description: "Certificate identifier label"
+      role:
+        type: "string"
+        description: "The server certificate role (EP,PARTNER,AUXILIARY,ROOT_CA)"
+        readOnly: true
+        enum:
+        - "ROOT_CA"
+        - "ENTRYPOINT"
+        - "PARTNER"
+        - "AUXILIARY"
+      subject:
+        type: "string"
+      validUntil:
+        type: "string"
+        description: "The certificate is valid until this date"
+      subjectAlternativeNames:
+        description: "Subject Alternative Names Extension"
+        $ref: "#/definitions/AlternativeNames"
+      version:
+        type: "string"
+        example: "V3"
+        description: "Certificate version"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
+      uid:
+        type: "string"
+      serial:
+        type: "string"
+        example: "185fb61e97f55b19"
+        description: "Certificate serial number"
+      signatureAlgorithm:
+        type: "string"
+        example: "sha256RSA"
+        description: "Sigining algorithm used for signing this certificate"
+      issuer:
+        type: "string"
+        description: "The CA that signed this certificate"
+      validFrom:
+        type: "string"
+        description: "The certificate is valid starting from this date"
+      pkInfo:
+        $ref: "#/definitions/PKInfoType"
+      basicConstraints:
+        description: "Basic Constraints Extension"
+        $ref: "#/definitions/BasicConstraints"
+      subjectKeyIdentifier:
+        description: "Subject Key Identifier Extension"
+        $ref: "#/definitions/SubjectKeyIdentifier"
+      authorityKeyIdentifier:
+        description: "Authority Key Identifier Extension"
+        $ref: "#/definitions/AuthorityKeyIdentifier"
+      issuerAlternativeNames:
+        description: "Issuer Alternative Names Extension"
+        $ref: "#/definitions/AlternativeNames"
+      extendedKeyUsage:
+        description: "Extended Key Usage Extension"
+        $ref: "#/definitions/ExtendedKeyUsage"
+      sha1Thumbprint:
+        type: "string"
+        description: "certificate sha1"
+      signature:
+        type: "string"
+        description: "CA signature value for this certificate"
+      isCa:
+        type: "boolean"
+        description: "Determines if this certificate is a CA certificate"
+      isSelfSigned:
+        type: "boolean"
+        description: "Determines if this certificate is a self-signed certificate"
+    description: "Certificate public information"
   SystemInfo:
     type: "object"
     properties:
@@ -1819,6 +2431,11 @@ definitions:
         readOnly: true
         items:
           type: "string"
+      alerts:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/AlertsSummary"
     description: "Include information on UKC server"
   Token:
     type: "object"
