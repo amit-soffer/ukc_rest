@@ -1,158 +1,70 @@
 ---
 swagger: "2.0"
 info:
-  description: >-
-    The Unbound Key Control ("UKC") Administration API enables management of UKC configuration and objects.
-
-
-    # Authentication
-
-    Most UKC API operations require an authorization context and user
-    permissions. Users are identified by an authentication token attached to the
-    request headers.
-
-    
-    ## Certificate Authentication
-    
-    Depending on UKC server setup, a request to the API may require a client 
-    certificate. The certificate identifies the server or application connecting 
-    with the UKC server. In UKC terms, this server is denoted as the UKC Client.
-
-    
-    Such certificates can be generated using the UKC CLI or UI tools, as well 
-    as by the Administration API.
-
-    
-    Refer to the *UKC Users Guide* for further details on configuring client 
-    certificate.
-
-
-    ## Basic Authentication
-
-    UKC supports the basic authentication scheme. The "Basic" HTTP
-    authentication scheme is defined in  RFC 7617, which transmits credentials
-    as user/password pairs, encoded using base64 in the HTTP Authorization
-    header.
-
-
-    The user ID can include the required partition in the format:
-
-    `username@partitionId:password`
-
-    ## Authentication Token
-
-    The system can authenticate the user with a generated authentication token,
-    which is valid for a limited time. This token eliminates the need to
-    transmit the  username/password on every request. See `GET /authToken` for
-    more information.
-
-    ## Authentication Failure (unauthorized)
-
-    If an operation is unauthorized, an HTTP 401 status code is returned with
-    the `WWW-Authenticate` header.
-
-    # Partitioning
-
-    UKC objects are organized into partitions. Partitioning allows namespacing
-    and access control to objects by configuring users with roles per partition.
-
-
-    The objects contained in a partition are: 
-
-    Users, Clients, Keys, Certificates, Secrets, and other partitions.
-
-    ## Permissions
-
-    Any partition can have many users who can access its objects.
-
-    A partition user can have one of two security roles:
-
-    - **so** - Security Officer. Can perform all operations on the partition
-    objects including administration: adding, modifying and deleting objects.
-
-    - **user** - Can only perform cryptographic operations with the partition
-    objects, such as sign and verify, and can also edit keys, certificates and
-    secrets.
-
-    ## Root Partition
-
-    The default built-in partition for an UKC cluster is called `root` and is
-    created automatically when setting up a new UKC cluster. The `root` partition 
-    contains all other partitions.
-
-    ## Partition Hierarchy
-
-    - __Parent partition__ - Any partition, _except_ the root partition, has one
-    parent partition.
-
-    - __Permissions inheritance__ - User access permissions can be configured to
-    be _inherited_ from the parent partition. For example, a user `userA`, which
-    is an SO on `partitionA`, would also have SO permissions on `partitionB` if
-    `partitionB` is child of `partitionA`.
-        - __Note:__ By default, access permissions are not inherited from the 
-        parent partition. To use permission inheritance, it should be configured 
-        explicitly.
-      
-    ## Default Partition Context
-
-    For every request the _default partition_ is the home partition of the
-    connected user.
-
-
-    For example:
-      - `so@root` - the default partition is the root partition.
-      - `so@partitionA` - the default partition is `partitionA`.
-      - `user@partitionA.partitionB` - the default partition is `partitionB`, 
-      which is a child of `partitionA`.
-      - `so@partitionB` - the default partition is `partitionB`, which is child 
-      of the root partition.
-      
-    If a user of the root partition is executing an operation on an inherited 
-    partition, the partition context should be set using the query parameter 
-    *partition*, which is available for all relevant requests.
-    
-      
-    # Object IDs
-
-    Many operations require an object ID as part of the resource URI. Object ids
-    can be one of:
-
-    - An object __UUID__ where applicable. This ID is a server generated ID,
-    which is unique per object type.
-      - __Note:__ Objects of different types can have the same UUID. For example, 
-      user A and key A. That is due to the fact that UUIDs are unique only per 
-      object type.
-    - An object relative or absolute path as specified above.
-
-    # Quorum
-    
-    The UKC can be configured to require quorum approval for certain operations. 
-    In case the operation you are executing requires it, the http result would 
-    be 202 (ACCEPTED) and a quorum job object.
-    
-    
-    Use the `jobs` API in order to manage approvals for different jobs.
-    
-    # Common Errors
-
-    Any API call can result in one of the following general HTTP codes:
-
-    - 500 - General server error.
-
-    - 404 - Resource not found. Verify that the URL exists.
-
-    - 401 - Unauthorized
-  version: 2.0.1809
-  title: UKC Admin API
-  termsOfService: ''
-  contact: {
-    name: "UKC Admin API",
-    url: "http://www.unboundtech.com",
-    email: "support@unboundtech.com"
-  }
-  license: {
-    name: ''
-  }
+  description: "The UKC Administration API allows managing Unbound Key Control configuration\
+    \ and objects.\n\
+    \n# UKC Authentication\nMost UKC API operations require an authorization context and\
+    \ user permissions. Users are identified by an authentication token attached to\
+    \ the request headers.\n## Basic Authentication\nUKC supports the Basic authentication\
+    \ scheme\nThe \"Basic\" HTTP authentication scheme is defined in RFC 7617, which\
+    \ transmits credentials as user/password pairs, encoded using base64 in the HTTP\
+    \ Authorization header.\nThe user ID can include the required partition in the\
+    \ format `username@partitionId:password`\n## Authentication token\nThe system\
+    \ can authenticate the user with a generated authentication token which is valid\
+    \ for a limited time. This eliminates the need to transmit username/password on\
+    \ every request. see `GET /authToken` for more information.\n## Authentication\
+    \ failure (unauthorized)\nIn case an operation is unauthorized, HTTP 401 status\
+    \ code will be returned with the `WWW-Authenticate` header \n# Partitioning\n\
+    UKC Objects are organized into partitions. Partitioning allows namespacing and\
+    \ access control to objects by configuring users with roles per partition.\nThe\
+    \ objects contained in a partition are: Users, Clients, Keys, Certificates, Secrets\
+    \ and other partitions\n## Permissions\n- Any partition can have many users who\
+    \ can access it's objects\n- A partition user can have one of two security roles:\n\
+    \  - so - Security Officer. Can perform all operations on the partition objects\
+    \ including administration: adding, modifying and deleting objects.\n  - user\
+    \ - Can only perform cryptographic operations with the partition objects, for\
+    \ example, sign, verify etc... and also edit keys, certificates and secrets\n\
+    ## Root partition\n- The default built-in partition for an UKC cluster is called\
+    \ `root` and is created automatically when setting up a new UKC cluster.\n## Partition\
+    \ Hierarchy\n- __Parent partition__\n  Any partition _except_ the root partition\
+    \ has one parent partition.\n- __Permissions Inheritance__\n  User access permissions\
+    \ can be configured to be _inherited_ from the parent partition. So, for example,\
+    \ a user `userA` which is an SO on partitionA, would also have SO permissions\
+    \ on partitionB if partitionB is child of partitionA.\n  __Note:__ By default,\
+    \ access permissions are not inherited from the parent partition. In order to\
+    \ use permission inheritance, it should be configured explicitly\n## Default partition\
+    \ context\nFor every request the _default partition_ will be the home partition\
+    \ of the connected user.\nFor example:\n  - `so@partitionA` - the default partition\
+    \ will be partitionA\n  - `user@partitionA.partitionB` - the default partition\
+    \ will be partitionB which is a child of partitionA\n  - `so@partitionB` - the\
+    \ default partition will be partitionB which is child of the root partition\n\
+    ## Object path\n- An UKC object (User, Key etc...) can be referenced by it's unique\
+    \ object path which may be absolute or relative to the default partition\n- The\
+    \ object path is unique per object type. So, within one partition there can be\
+    \ two objects represented by the same path, one is a key and one is a user.\n\
+    - UKC Object path is composed of a series of path components separated by the\
+    \ dot character (`.`)\n- A path component may represent a partition name or object\
+    \ name\n  - The last component in a path is an object name\n- An absolute path\
+    \ starts with the tilde character `~` which represents the root partition\n  -\
+    \ For example to delete a key named keyA which is contained in a partition partitionC:\
+    \ `DELETE https://myukcserver.com/keys/~.partitionC.keyA`\n- A relative path uses\
+    \ the current default partition as the root of the specified path. So, \n  - If\
+    \ a user is logged in as `so@partitionC` he can perform the same delete action\
+    \ as in the previous example with `DELETE https://myukcserver.com/keys/keyA`.\n\
+    \  - If the user is logged in as `so@root` he can use `DELETE https://myukcserver.com/keys/partitionC.keyA`\
+    \ as its relative to the root partition\n# Object Ids\nMany operations requrire\
+    \ an object ID as part of the resource URI. Objects ids can be one of:\n- An object\
+    \ __UUID__ where applicable. This is a server generated ID which is unique per\
+    \ object type.\n  - __Note__ Objects of different types can have the same UUID.\
+    \ For example, A user and A key. Thats due to the fact that UUID's are unique\
+    \ only per object type\n- An object relative or absolute path as specified above\n\
+    # Common Errors\nAny API call can result in one of the following general HTTP\
+    \ codes\n- 500 - General server error\n- 404 - Resource not found. Verify that\
+    \ the url exists\n- 401 - Unauthorized"
+  version: "2.0.1810"
+  title: "UKC Admin API"
+  termsOfService: ""
+  contact: {}
 tags:
 - name: "Authentication"
 - name: "Clients"
@@ -168,7 +80,7 @@ paths:
     get:
       tags:
       - "Authentication"
-      summary: "Returns an authentication token that can be used in future calls\
+      summary: "Returns an authentication token which can be used in future calls\
         \ for authentication"
       description: "The user credentials are provided in the HTTP headers"
       operationId: "getAuthToken"
@@ -181,8 +93,8 @@ paths:
           schema:
             $ref: "#/definitions/Token"
         401:
-          description: "Authentication failure, the system could not verify the User/Password\
-            \ passed in the request header"
+          description: "Authentication failure, the system could not verify the user\
+            \ name and password passed in the request header"
       security:
       - basicAuth: []
       - Authorization: []
@@ -204,7 +116,12 @@ paths:
         in: "query"
         description: "Detailed"
         required: false
-        type: "boolean"                       
+        type: "boolean"
+      - name: "template"
+        in: "query"
+        description: "Template"
+        required: false
+        type: "string"
       responses:
         200:
           description: "OK"
@@ -239,13 +156,13 @@ paths:
         type: "string"
       responses:
         200:
-          description: "Successful operation"
+          description: "successful operation"
           schema:
-            $ref: "#/definitions/ActivationCode"
+            $ref: "#/definitions/Client"
         201:
           description: "New client created successfully"
           schema:
-            $ref: "#/definitions/ActivationCode"
+            $ref: "#/definitions/Client"
         202:
           description: "ACCEPTED"
           schema:
@@ -259,7 +176,7 @@ paths:
     get:
       tags:
       - "Clients"
-      summary: "Get client alerts summary"
+      summary: "Get clients alerts summary"
       description: ""
       operationId: "getAlertsSummary"
       produces:
@@ -282,7 +199,7 @@ paths:
     post:
       tags:
       - "Clients"
-      summary: "Creates a new client and returns its certificate"
+      summary: "Creates a new client and returns it's certificate"
       description: ""
       operationId: "createClientWithCertificate"
       consumes:
@@ -305,7 +222,7 @@ paths:
         type: "string"
       responses:
         200:
-          description: "Successful operation"
+          description: "successful operation"
           schema:
             type: "file"
         201:
@@ -350,6 +267,43 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+    put:
+      tags:
+      - "Clients"
+      summary: "Update Client Properties"
+      description: "Update Client Properties"
+      operationId: "updateClient"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "clientId"
+        in: "path"
+        description: "Client ID"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Clients updates"
+        required: false
+        schema:
+          $ref: "#/definitions/ClientsUpdates"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "Client Updated successfully."
+          schema:
+            $ref: "#/definitions/Client"
+        202:
+          description: "ACCEPTED"
+          schema:
+            $ref: "#/definitions/Job"
+      security:
+      - basicAuth: []
+      - Authorization: []
     delete:
       tags:
       - "Clients"
@@ -372,6 +326,44 @@ paths:
       responses:
         200:
           description: "Client deleted successfully."
+        202:
+          description: "ACCEPTED"
+          schema:
+            $ref: "#/definitions/Job"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/clients/{clientId}/activation-code:
+    put:
+      tags:
+      - "Clients"
+      summary: "Refresh Client Activation Code"
+      description: "Refresh Client Activation Code"
+      operationId: "refreshClientActivationCode"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "clientId"
+        in: "path"
+        description: "Client ID"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Refreshed values"
+        required: false
+        schema:
+          $ref: "#/definitions/RefreshedClient"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "Activation code Refreshed successfully."
+          schema:
+            $ref: "#/definitions/Client"
         202:
           description: "ACCEPTED"
           schema:
@@ -412,8 +404,8 @@ paths:
       tags:
       - "General"
       summary: "Check if the UKC server is alive and functioning properly"
-      description: "Return health status of the system, determines if it is usable,\
-        \ as long as http return code is OK, system is usable"
+      description: "Return health status of the system and determine if it is usable.\
+        \ As long as the HTTP return code is OK, the system is usable."
       operationId: "getHealth"
       parameters: []
       responses:
@@ -428,7 +420,7 @@ paths:
       - "General"
       summary: "Return system information"
       description: "Including version and supported capabilities. If authentication\
-        \ is provided, returns also the allowed operations."
+        \ is provided, returns the allowed operations."
       operationId: "getSystemInfo"
       produces:
       - "application/json"
@@ -463,7 +455,7 @@ paths:
         type: "string"
       responses:
         200:
-          description: "Successful operation"
+          description: "successful operation"
           schema:
             $ref: "#/definitions/QuorumStatus"
       security:
@@ -672,12 +664,12 @@ paths:
           $ref: "#/definitions/NewPartition"
       responses:
         200:
-          description: "Successful operation"
+          description: "successful operation"
           schema:
             type: "file"
         201:
           description: "Partition created successfully. If initial client was specified,\
-            \ the response includes the generated PFX in Base64 encoded DER format"
+            \ the response will include the generated PFX in Base64 encoded DER format"
         409:
           description: "Object already exists"
       security:
@@ -776,7 +768,7 @@ paths:
       - name: "partitionId"
         in: "path"
         description: "Partition Id/name of the target partition. Can be \\&quot;default\\\
-          &quot; to use the default partition for the current authenticated user."
+          &quot; to use the default partition for the current autneticated user."
         required: true
         type: "string"
       - name: "detailed"
@@ -834,8 +826,8 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Return random bytes from the UKC server, by default returns 32 bytes,\
-        \ unless size is specified"
+      summary: "Return random bytes from the UKC server. By default it returns 32\
+        \ bytes, unless size is specified."
       description: "The UKC random number generator is combined from different entropy\
         \ sources of the different servers in the UKC cluster"
       operationId: "generateRandom"
@@ -867,7 +859,7 @@ paths:
       description: "Different clients can add entropy to the server. Collecting entropy\
         \ from the clients can enhance the strength of the UKC random number generator.\
         \ This function only adds entropy, i.e. if the provided value has no entropy,\
-        \ it will not harm the generator quality"
+        \ it does not harm the generator quality"
       operationId: "addRandomEntropyBytes"
       consumes:
       - "application/json"
@@ -891,7 +883,7 @@ paths:
       tags:
       - "General"
       summary: "Return specific server certificate"
-      description: "Download this specific server certificate. Used for registering\
+      description: "Download this specific server certificate. It is used for registering\
         \ new servers"
       operationId: "selfCertGet"
       produces:
@@ -980,7 +972,7 @@ paths:
         type: "boolean"
       responses:
         200:
-          description: "Successful operation"
+          description: "successful operation"
           schema:
             $ref: "#/definitions/NewServer"
         201:
@@ -1056,7 +1048,7 @@ paths:
         type: "boolean"
       responses:
         200:
-          description: "Successful operation"
+          description: "successful operation"
           schema:
             $ref: "#/definitions/NewPair"
         201:
@@ -1099,7 +1091,7 @@ paths:
       - "System"
       summary: "Remove a server or server pair from the UKC cluster"
       description: "Removes an Auxiliary server or server pair from UKC cluster. A\
-        \ server pair is treated as one unit, identified by the host of its EntryPoint\
+        \ server pair is treated as one unit, identified by the host of it's EntryPoint\
         \ server."
       operationId: "deleteServer"
       consumes:
@@ -1109,7 +1101,7 @@ paths:
       parameters:
       - name: "serverId"
         in: "path"
-        description: "The identifier of the server is its url. In case of server\
+        description: "The identifier of the server is it&#39;s url. In case of server\
           \ pair, this should be the host of the EntryPoint server"
         required: true
         type: "string"
@@ -1123,7 +1115,7 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get the server and root ca certificates"
+      summary: "Get the servers and root ca certificates"
       description: ""
       operationId: "getSystemCertificates"
       consumes:
@@ -1148,7 +1140,7 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get the server and root ca certificates"
+      summary: "Get the servers and root ca certificates"
       description: ""
       operationId: "getSystemAlerts"
       consumes:
@@ -1168,7 +1160,7 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get a specific system certificate"
+      summary: "Get specific system certificate"
       description: ""
       operationId: "getSystemCertificate"
       consumes:
@@ -1198,7 +1190,7 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get a specific system certificate alert"
+      summary: "Get specific system certificate alert"
       description: ""
       operationId: "getSystemCertificateAlerts"
       consumes:
@@ -1224,8 +1216,8 @@ paths:
       tags:
       - "System"
       summary: "Get UKC system configuration parameters"
-      description: "Returns a list of key-value entries that represent the configuration\
-        \ paraemeters for the UKC system"
+      description: "Returns a list of key-value entries which represent the configuration\
+        \ parameters for the UKC system"
       operationId: "getSettings"
       produces:
       - "application/json"
@@ -1281,7 +1273,7 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Return the topology in the cluster including the server status"
+      summary: "Return the topology in the cluster including servers status"
       description: ""
       operationId: "getTopology"
       produces:
@@ -1297,6 +1289,29 @@ paths:
           description: "OK"
           schema:
             $ref: "#/definitions/Topology"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/trust:
+    get:
+      tags:
+      - "General"
+      summary: "Get all trusted certificates"
+      description: ""
+      operationId: "getTrust"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "detailed"
+        in: "query"
+        description: "Detailed"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/SystemCertificate"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1363,8 +1378,8 @@ paths:
     put:
       tags:
       - "Users"
-      summary: "Recover SO password"
-      description: "Recover SO password. Root SO can recover for other SOs."
+      summary: "Recover so password"
+      description: "Recover so password, Root SO can do it for other SOs."
       operationId: "recoverSoPassword"
       consumes:
       - "application/json"
@@ -1389,7 +1404,7 @@ paths:
         type: "string"
       responses:
         200:
-          description: "SO password recovered successfully"
+          description: "So password recovered successfully"
         400:
           description: "New password does not comply with password policy rules"
       security:
@@ -1453,8 +1468,8 @@ paths:
       tags:
       - "Users"
       summary: "Reset user password"
-      description: "Reset user password, SO can reset it for users in his partition.\
-        \ Root partition SO can reste it for SO of other partitions."
+      description: "Reset user password, SO can do it for users in his partition.\
+        \ root parition SO can do it to SO of other partitions."
       operationId: "resetUserPassword"
       consumes:
       - "application/json"
@@ -1489,8 +1504,8 @@ securityDefinitions:
   Authorization:
     description: "For accessing the API a valid JWT token must be passed in all the\
       \ queries in\nthe 'Authorization' header.\nA valid JWT token is generated by\
-      \ the API and retourned as answer of a call\nto the route /login giving a valid\
-      \ user and password.\nThe following syntax must be \nused in the 'Authorization'\
+      \ the API and returned as answer of a call\nto the route /login giving a valid\
+      \ user & password.\nThe following syntax must be \nused in the 'Authorization'\
       \ header :\n       Bearer: xxxxxx.yyyyyyy.zzzzzz"
     type: "apiKey"
     name: "Authorization"
@@ -1498,17 +1513,6 @@ securityDefinitions:
   basicAuth:
     type: "basic"
 definitions:
-  ActivationCode:
-    type: "object"
-    required:
-    - "value"
-    properties:
-      value:
-        type: "string"
-        example: "123456"
-        description: "Client activation code"
-        minLength: 1
-    description: "ActivationCode"
   Alert:
     type: "object"
     properties:
@@ -1518,6 +1522,7 @@ definitions:
         enum:
         - "CERT_ABOUT_TO_EXPIRE"
         - "CERT_EXPIRED"
+        - "OUT_OF_SYNC"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1535,12 +1540,14 @@ definitions:
         enum:
         - "CLIENTS"
         - "SYSTEM"
+        - "KEYS"
       alertType:
         type: "string"
         readOnly: true
         enum:
         - "CERT_ABOUT_TO_EXPIRE"
         - "CERT_EXPIRED"
+        - "OUT_OF_SYNC"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1653,16 +1660,16 @@ definitions:
       signatureAlgorithm:
         type: "string"
         example: "sha256RSA"
-        description: "Sigining algorithm used for signing this certificate"
+        description: "Signing algorithm used for signing this certificate"
       issuer:
         type: "string"
         description: "The CA that signed this certificate"
       validFrom:
         type: "string"
-        description: "Start date of validity period for this certificate"
+        description: "Date of of validity period start for this certificate"
       validUntil:
         type: "string"
-        description: "End date of validity period for this certificate"
+        description: "Date of of validity period end for this certificate"
       subject:
         type: "string"
       pkInfo:
@@ -1693,7 +1700,7 @@ definitions:
         description: "Determines if this certificate is a CA certificate"
       isSelfSigned:
         type: "boolean"
-        description: "Determines if this certificate is a self-signed certificate"
+        description: "Determines if this certificate is a self signed certificate"
     description: "Certificate public information"
   Client:
     type: "object"
@@ -1723,6 +1730,8 @@ definitions:
         - "ACTIVATION_CODE"
         - "CERTIFICATE_DOWNLOAD"
         - "EXTERNAL"
+        - "TEMPLATE"
+        - "EPHEMERAL"
       lastUpdatedAt:
         type: "string"
         description: "Last update time for this client record"
@@ -1741,12 +1750,38 @@ definitions:
       allowNat:
         type: "boolean"
         description: "Allow client use NAT"
+      certificateExpiration:
+        type: "integer"
+        format: "int32"
+        description: "Client certificate validity in minutes"
+      activationCodeValidity:
+        type: "integer"
+        format: "int32"
+        description: "Client activation code validity in minutes"
+      activationCodeLength:
+        type: "integer"
+        format: "int32"
+        description: "Client activation code length (digits)"
+      activationCodeExpiration:
+        type: "string"
+        description: "Client activation code expiration date"
+      ipRange:
+        type: "string"
+        description: "Client IP range"
+      template:
+        type: "string"
+        description: "Client template"
+      activationCode:
+        type: "string"
+        description: "Client activation code"
       certificateInfo:
         description: "Client certificate info"
         $ref: "#/definitions/CertificateInfo"
       certExpiresAt:
         type: "string"
         description: "Client certificate expiration date"
+      createdAt:
+        type: "string"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1756,13 +1791,25 @@ definitions:
         type: "string"
         description: "Client version"
     description: "A UKC new client"
+  ClientsUpdates:
+    type: "object"
+    properties:
+      checkIp:
+        type: "boolean"
+        description: "Enforce client ip verification"
+      allowNat:
+        type: "boolean"
+        description: "Allow client use NAT"
+      ipRange:
+        type: "string"
+        description: "Client IP range"
   ECCBipKeyInfo:
     type: "object"
     properties:
       level:
         type: "string"
         format: "byte"
-        description: "level (0 for master)"
+        description: "Level (0 for master)"
         readOnly: true
       childNumber:
         type: "integer"
@@ -1771,7 +1818,7 @@ definitions:
         readOnly: true
       hardened:
         type: "boolean"
-        description: "is hardened or not"
+        description: "True if hardened"
         readOnly: true
       chainCode:
         type: "string"
@@ -1804,7 +1851,7 @@ definitions:
         type: "string"
         description: "Encoded public key (EC point)"
       eccBipKeyInfo:
-        description: "ECC bip info"
+        description: "ECC BIP info"
         $ref: "#/definitions/ECCBipKeyInfo"
     description: "Details of ECC public key"
   ExtendedKeyUsage:
@@ -1873,7 +1920,7 @@ definitions:
         type: "integer"
         format: "int32"
         readOnly: true
-    description: "An asynchronous job"
+    description: "An asynchrounous job"
   KeyValueEntry:
     type: "object"
     required:
@@ -1958,6 +2005,24 @@ definitions:
       allowNat:
         type: "boolean"
         description: "Allow client use NAT"
+      certificateExpiration:
+        type: "integer"
+        format: "int32"
+        description: "Client certificate validity in minutes"
+      activationCodeValidity:
+        type: "integer"
+        format: "int32"
+        description: "Client activation code validity in minutes"
+      isTemplate:
+        type: "boolean"
+        description: "Is client is a template client or not"
+      activationCodeLength:
+        type: "integer"
+        format: "int32"
+        description: "Client activation code length (digits)"
+      ipRange:
+        type: "string"
+        description: "Client IP range"
   NewClientWithCertificate:
     type: "object"
     required:
@@ -1965,7 +2030,7 @@ definitions:
     properties:
       name:
         type: "string"
-        example: "clinet-name"
+        example: "client-name"
         description: "Client name"
         minLength: 1
       checkIp:
@@ -1974,9 +2039,13 @@ definitions:
       allowNat:
         type: "boolean"
         description: "Allow client use NAT"
+      certificateExpiration:
+        type: "integer"
+        format: "int32"
+        description: "Client certificate validity in minutes"
       alternativeNames:
         type: "array"
-        example: "{client-ip,client-name}"
+        example: "{clinet-ip,clinet-name}"
         description: "Client alternative names"
         items:
           type: "string"
@@ -2029,7 +2098,7 @@ definitions:
       propagate:
         type: "boolean"
         description: " Support certificate propagation"
-    description: "A UKC partition"
+    description: "A UKC Partition"
   NewServer:
     type: "object"
     required:
@@ -2048,7 +2117,7 @@ definitions:
       newServerCertificate:
         description: "The new server certificate"
         $ref: "#/definitions/NewServerCertificate"
-    description: "A new UKC server"
+    description: "An UKC New Server"
   NewServerCertificate:
     type: "object"
     properties:
@@ -2092,7 +2161,7 @@ definitions:
         $ref: "#/definitions/RSAKeyInfoType"
       ecc:
         $ref: "#/definitions/ECCKeyInfoType"
-    description: "Properties of the PKI key"
+    description: "Properties of PKI key"
   Pair:
     type: "object"
     properties:
@@ -2110,7 +2179,7 @@ definitions:
     properties:
       checkClientIp:
         type: "boolean"
-        description: "Check clients IP"
+        description: "check clients ip"
         readOnly: true
       name:
         type: "string"
@@ -2118,11 +2187,11 @@ definitions:
         readOnly: true
       allowNat:
         type: "boolean"
-        description: "Is NAT allowed"
+        description: "True when allowing NAT"
         readOnly: true
       allowUserOnlyCryptoOperations:
         type: "boolean"
-        description: "Is user allowed to do only crypto"
+        description: "True if user is only allowed to do crypto"
         readOnly: true
       clientRetriesLimit:
         type: "integer"
@@ -2132,59 +2201,59 @@ definitions:
       clientRetriesTimeout:
         type: "integer"
         format: "int32"
-        description: "Client retries timeout"
+        description: "client retries timeout"
         readOnly: true
       creationDate:
         type: "string"
-        description: "Partition creation date"
+        description: "partition creation date"
         readOnly: true
       lastUpdate:
         type: "string"
-        description: "Partition last update"
+        description: "partition last update"
         readOnly: true
       passwordComplexity:
         type: "boolean"
-        description: "Enforce password complexity"
+        description: "enforce password complexity"
         readOnly: true
       passwordLength:
         type: "integer"
         format: "int32"
-        description: "Partition allowed password length"
+        description: "partition allowed password length"
         readOnly: true
       quorumOperations:
         type: "string"
-        description: "Quorum operations"
+        description: "quorum operations"
         readOnly: true
       quorumSize:
         type: "integer"
         format: "int32"
-        description: "Quorum size"
+        description: "quorum size"
         readOnly: true
       quorumTimeout:
         type: "integer"
         format: "int32"
-        description: "Quorum timeout"
+        description: "quorum timeout"
         readOnly: true
       supportCertificatePropagation:
         type: "boolean"
-        description: "Enable support certificate propagation"
+        description: "True when supporting certificate propagation"
         readOnly: true
       supportPartitionInheritance:
         type: "boolean"
-        description: "Enable support certificate inheritance"
+        description: "True when supporting certificate inheritance"
         readOnly: true
       userRetriesLimit:
         type: "integer"
         format: "int32"
-        description: "User retries limit"
+        description: "user retries limit"
         readOnly: true
       jWTExpiration:
         type: "integer"
         format: "int32"
         description: "JWT expiration time"
         readOnly: true
-    description: "A partition is used as a logical container for security objects,\
-      \ such as keys and certificates"
+    description: "A partitions is used as a logical container for security objects\
+      \ like keys and Certificates"
   Password:
     type: "object"
     required:
@@ -2233,6 +2302,24 @@ definitions:
         description: "base64 encoded entropy bytes"
         minLength: 1
     description: "Random Entropy Bytes"
+  RefreshedClient:
+    type: "object"
+    properties:
+      certificateExpiration:
+        type: "integer"
+        format: "int32"
+        description: "Client certificate validity in minutes"
+      activationCodeValidity:
+        type: "integer"
+        format: "int32"
+        description: "Client activation code validity in minutes"
+      activationCodeLength:
+        type: "integer"
+        format: "int32"
+        description: "Client activation code length (digits)"
+      ipRange:
+        type: "string"
+        description: "Client IP range"
   Server:
     type: "object"
     properties:
@@ -2308,7 +2395,7 @@ definitions:
         description: "Extension UID"
       isCritical:
         type: "boolean"
-        description: "Is extension critical"
+        description: "Is Extension Critical"
       keyId:
         type: "string"
         readOnly: true
@@ -2348,7 +2435,7 @@ definitions:
         type: "string"
       validUntil:
         type: "string"
-        description: "The certificate is valid until this date"
+        description: "Date of of validity period end for this certificate"
       subjectAlternativeNames:
         description: "Subject Alternative Names Extension"
         $ref: "#/definitions/AlternativeNames"
@@ -2370,13 +2457,13 @@ definitions:
       signatureAlgorithm:
         type: "string"
         example: "sha256RSA"
-        description: "Sigining algorithm used for signing this certificate"
+        description: "Signing algorithm used for signing this certificate"
       issuer:
         type: "string"
         description: "The CA that signed this certificate"
       validFrom:
         type: "string"
-        description: "The certificate is valid starting from this date"
+        description: "Date of of validity period start for this certificate"
       pkInfo:
         $ref: "#/definitions/PKInfoType"
       basicConstraints:
@@ -2405,7 +2492,7 @@ definitions:
         description: "Determines if this certificate is a CA certificate"
       isSelfSigned:
         type: "boolean"
-        description: "Determines if this certificate is a self-signed certificate"
+        description: "Determines if this certificate is a self signed certificate"
     description: "Certificate public information"
   SystemInfo:
     type: "object"
@@ -2418,16 +2505,16 @@ definitions:
       allowedOperations:
         type: "array"
         example: "{Create,Destroy,Sign,...}"
-        description: "A list of operation IDs that represent the operations that\
-          \ the current user is allowed to use. Should match the operation IDs as\
+        description: "A list of operation Id's that represent the operations that\
+          \ the current user is allowed to use. Should match the operation Id's as\
           \ specified in this document"
         readOnly: true
         items:
           type: "string"
       allowedPartitions:
         type: "array"
-        example: "{part1,parr2,...}"
-        description: "The partitions on which the user can contact them"
+        example: "{part1, part2, ...}"
+        description: "the partitions on which the user can contact them"
         readOnly: true
         items:
           type: "string"
@@ -2463,7 +2550,7 @@ definitions:
         readOnly: true
         items:
           $ref: "#/definitions/Server"
-    description: "UKC server topology"
+    description: "A UKC servers topology"
   User:
     type: "object"
     properties:
