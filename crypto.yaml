@@ -1,155 +1,14 @@
 ---
 swagger: "2.0"
 info:
-  description: >-
-    The UKC Crypto API provides cryptographic services used with Keys 
-    managed by UKC.
-
-
-    __This API is in draft status and is currently being reviewed__
-
-
-    # Authentication
-
-    Most UKC API operations require an authorization context and user
-    permissions. Users are identified by an authentication token attached to the
-    request headers.
-
-    ## Basic Authentication
-
-    UKC supports the basic authentication scheme. The "Basic" HTTP
-    authentication scheme is defined in  RFC 7617, which transmits credentials
-    as user/password pairs, encoded using base64 in the HTTP Authorization
-    header.
-
-
-    The user ID can include the required partition in the format:
-
-    `username@partitionId:password`
-
-    ## Authentication Token
-
-    The system can authenticate the user with a generated authentication token,
-    which is valid for a limited time. This token eliminates the need to
-    transmit the  username/password on every request. See `GET /authToken` for
-    more information.
-
-    ## Authentication Failure (unauthorized)
-
-    If an operation is unauthorized, an HTTP 401 status code is returned with
-    the `WWW-Authenticate` header.
-
-    # Partitioning
-
-    UKC objects are organized into partitions. Partitioning allows namespacing
-    and access control to objects by configuring users with roles per partition.
-
-
-    The objects contained in a partition are: 
-
-    Users, Clients, Keys, Certificates, Secrets and other partitions
-
-    ## Permissions
-
-    Any partition can have many users who can access its objects.
-
-    A partition user can have one of two security roles:
-
-    - **so** - Security Officer. Can perform all operations on the partition
-    objects including administration: adding, modifying and deleting objects.
-
-    - **user** - Can only perform cryptographic operations with the partition
-    objects, such as sign and verify, and can also edit keys, certificates and
-    secrets.
-
-    ## Root Partition
-
-    The default built-in partition for an UKC cluster is called `root` and is
-    created automatically when setting up a new UKC cluster.
-
-    ## Partition Hierarchy
-
-    - __Parent partition__ - Any partition, _except_ the root partition, has one
-    parent partition.
-
-    - __Permissions inheritance__ - User access permissions can be configured to
-    be _inherited_ from the parent partition. For example, a user `userA`, which
-    is an SO on `partitionA`, would also have SO permissions on `partitionB` if
-    `partitionB` is child of `partitionA`.
-        - __Note:__ By default, access permissions are not inherited from the parent partition. To use permission inheritance, it should be configured explicitly.
-      
-    ## Default Partition Context
-
-    For every request the _default partition_ is the home partition of the
-    connected user.
-
-
-    For example:
-      - `so@partitionA` - the default partition is `partitionA`.
-      - `user@partitionA.partitionB` - the default partition is `partitionB`, which is a child of `partitionA`.
-      - `so@partitionB` - the default partition is `partitionB`, which is child of the root partition.
-      
-    ## Object Path
-
-    - A UKC object, such as User or Key, can be referenced by its unique object
-    path, which may be absolute or relative to the default partition.
-
-    - The object path is unique per object type. Therefore, within one partition
-    there can be two objects represented by the same path, one is a key and one
-    is a user.
-
-    - UKC object path is composed of a series of path components separated by
-    the dot character (`.`).
-
-    - A path component may represent a partition name or object name.
-      - The last component in a path is an object name.
-    - An absolute path starts with the tilde character `~` which represents the
-    root partition.
-      - For example, to delete a key named `keyA` that is contained in a partition `partitionC`:
-      `DELETE https://myukcserver.com/keys/~.partitionC.keyA`
-    - A relative path uses the current default partition as the root of the
-    specified path. 
-      - If a user is logged in as `so@partitionC`, he can perform the same delete action as in the previous example with:
-      `DELETE https://myukcserver.com/keys/keyA`.
-      - If the user is logged in as `so@root`, he can use the following as its relative to the root partition:
-      `DELETE https://myukcserver.com/keys/partitionC.keyA` 
-      
-    # Object IDs
-
-    Many operations require an object ID as part of the resource URI. Object ids
-    can be one of:
-
-    - An object __UUID__ where applicable. This ID is a server generated ID,
-    which is unique per object type.
-      - __Note:__ Objects of different types can have the same UUID. For example, user A and key A. That is due to the fact that UUIDs are unique only per object type.
-    - An object relative or absolute path as specified above.
-
-    # Quorum
-    
-    The UKC can be configured to require quorum approval for certain operations. In case the operation you are executing requires it, the http result would be 202 (ACCEPTED) and a quorum job object.
-    
-    Use the `jobs` API in order to manage approvals for different jobs.
-    
-    # Common Errors
-
-    Any API call can result in one of the following general HTTP codes:
-
-    - 500 - General server error.
-
-    - 404 - Resource not found. Verify that the URL exists.
-
-    - 401 - Unauthorized
-  version: 2.0.1809
-  title: Unbound Key Control Server
-  termsOfService: ''
+  description: "The UKC Crypto API provides cryptographic services used with keys managed by UKC.\n\n# Common Errors\nAny API call can result in one of\
+    \ the following general HTTP codes\n- 500 - General server error\n- 404 - Resource\
+    \ not found. Verify that the url exists\n- 401 - Unauthorized"
+  version: "2.0.1810"
+  title: "Unbound Key Control Server"
+  termsOfService: ""
   contact:
-    name: UKC Administration API,
-    url: http://www.unboundtech.com,
-    email: support@unboundtech.com
-  license: {
-    name: '',
-    url: 'http://www.unboundtech.com'
-  }
+    name: "UKC Administration API"
 tags:
 - name: "Keys"
 - name: "Secrets"
@@ -171,6 +30,11 @@ paths:
         description: "Partition ID"
         required: false
         type: "string"
+      - name: "id"
+        in: "query"
+        description: "Key id"
+        required: false
+        type: "string"
       - name: "type"
         in: "query"
         description: "Key type"
@@ -183,9 +47,11 @@ paths:
         - "TDES"
         - "HMAC"
         - "SIV"
+        - "XTS"
         - "PRF"
         - "PWD"
         - "LIMA"
+        - "EDDSA"
       - name: "exportType"
         in: "query"
         description: "exportType"
@@ -265,7 +131,7 @@ paths:
         type: "string"
       - name: "trusted"
         in: "formData"
-        description: "trusted (yes or not)"
+        description: "trusted (yes or no)"
         required: false
         type: "boolean"
       - name: "keyOnly"
@@ -288,11 +154,34 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/keys/alerts:
+    get:
+      tags:
+      - "Keys"
+      summary: "Get keys alerts summary"
+      description: ""
+      operationId: "getAlertsSummary"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/AlertsSummary"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/keys/generate:
     post:
       tags:
       - "Keys"
-      summary: "Generate  new asymmetric key, key format is provided as a parameter"
+      summary: "Generate new asymmetric key, key format is provided as a parameter"
       description: "Generate a new key based on provided parameters"
       operationId: "generateKey"
       consumes:
@@ -417,6 +306,34 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/keys/{keyId}/alerts:
+    get:
+      tags:
+      - "Keys"
+      summary: "Get details of an existing client"
+      description: "Return details of a client"
+      operationId: "getKeyAlerts"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "keyId"
+        in: "path"
+        description: "Key ID to look for"
+        required: true
+        type: "string"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Alert"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/keys/{keyId}/decrypt:
     post:
       tags:
@@ -531,7 +448,7 @@ paths:
           $ref: "#/definitions/DeriveData"
       responses:
         200:
-          description: "Successful operation"
+          description: "successful operation"
           schema:
             $ref: "#/definitions/KeyInfo"
         201:
@@ -700,10 +617,12 @@ paths:
       tags:
       - "Keys"
       summary: "Get key public data"
-      description: "Return the public details of an asymmetric key or exportable symmetric key"
+      description: "Return the public details of an asymmetric key or exportable symmetric\
+        \ key"
       operationId: "getPublicKeyData"
       produces:
       - "application/json"
+      - "application/x-pem-file"
       parameters:
       - name: "keyId"
         in: "path"
@@ -717,7 +636,8 @@ paths:
         type: "string"
       - name: "obfuscate"
         in: "query"
-        description: "Add obfuscated private key as part of the encoded data, relevant only for PKI keys."
+        description: "Add obfuscated private key as part of the encoded data, relevant\
+          \ only for PKI keys."
         required: false
         type: "boolean"
       responses:
@@ -728,16 +648,16 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
-  /api/v1/keys/{keyId}/renew:
+  /api/v1/keys/{keyId}/rekey:
     post:
       tags:
       - "Keys"
       summary: "Renew an existing key. A link is created between the old key and the\
         \ new one."
-      description: "Create a new key with the same parameters as the existing one. The\
-        \ new key inherits the current key ID and a link is created between the\
+      description: "Create a new key with the same parameters as the existing one.\
+        \ The new key inherits the current key ID and a link is created between the\
         \ two keys."
-      operationId: "renewKey"
+      operationId: "rekey"
       consumes:
       - "application/json"
       parameters:
@@ -753,7 +673,7 @@ paths:
         type: "string"
       responses:
         200:
-          description: "Successful operation"
+          description: "successful operation"
           schema:
             $ref: "#/definitions/KeyInfo"
         201:
@@ -881,12 +801,50 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/keys/{keyId}/unwrap:
+    post:
+      tags:
+      - "Keys"
+      summary: "Unwrap and import a new key"
+      description: ""
+      operationId: "unwrap"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "keyId"
+        in: "path"
+        description: "The key used for unwrapping"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "UnWrap Data"
+        required: false
+        schema:
+          $ref: "#/definitions/UnwrapData"
+      responses:
+        201:
+          description: "New key created added successfully"
+        400:
+          description: "Authentication encryption failure"
+        409:
+          description: "Key with this ID already exist"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/keys/{keyId}/value:
     get:
       tags:
       - "Keys"
       summary: "Get key data"
-      description: "Return public details of an asymmetric key or exportable symmetric\
+      description: "Return the public details of an asymmetric key or exportable symmetric\
         \ key"
       operationId: "getKeyData"
       produces:
@@ -1027,22 +985,22 @@ paths:
         type: "string"
       - name: "newSecret"
         in: "formData"
-        description: "secret data"
+        description: "Secret data"
         required: true
         type: "file"
       - name: "id"
         in: "formData"
-        description: "secret id"
+        description: "Secret ID"
         required: true
         type: "string"
       - name: "description"
         in: "formData"
-        description: "key description"
+        description: "Key description"
         required: false
         type: "string"
       responses:
         200:
-          description: "Successful operation"
+          description: "successful operation"
           schema:
             $ref: "#/definitions/Secret"
         201:
@@ -1050,7 +1008,7 @@ paths:
           schema:
             $ref: "#/definitions/Secret"
         409:
-          description: "Secret with this ID already exists"
+          description: "Secret with this ID already exist"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1094,7 +1052,7 @@ paths:
         format: "int32"
       responses:
         200:
-          description: "Successful operation"
+          description: "successful operation"
           schema:
             $ref: "#/definitions/Secret"
         201:
@@ -1102,7 +1060,7 @@ paths:
           schema:
             $ref: "#/definitions/Secret"
         409:
-          description: "Secret with this ID already exist"
+          description: "Secret with this ID already exists"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1191,7 +1149,7 @@ paths:
         type: "string"
       - name: "secretId"
         in: "path"
-        description: "Secret id"
+        description: "Secret ID"
         required: true
         type: "string"
       - in: "body"
@@ -1267,7 +1225,7 @@ paths:
     put:
       tags:
       - "Secrets"
-      summary: "Update existing secret"
+      summary: "Update existing secret data"
       description: "Update existing secret"
       operationId: "updateFileSecret"
       consumes:
@@ -1332,7 +1290,7 @@ paths:
     put:
       tags:
       - "Secrets"
-      summary: "Update existing secret"
+      summary: "Update existing secret data"
       description: "Update existing secret"
       operationId: "updateTextSecret"
       consumes:
@@ -1368,8 +1326,8 @@ securityDefinitions:
   Authorization:
     description: "For accessing the API a valid JWT token must be passed in all the\
       \ queries in\nthe 'Authorization' header.\nA valid JWT token is generated by\
-      \ the API and retourned as answer of a call\nto the route /login giving a valid\
-      \ user and password.\nThe following syntax must be \nused in the 'Authorization'\
+      \ the API and returned as answer of a call\nto the route /login giving a valid\
+      \ user & password.\nThe following syntax must be \nused in the 'Authorization'\
       \ header :\n       Bearer: xxxxxx.yyyyyyy.zzzzzz"
     type: "apiKey"
     name: "Authorization"
@@ -1392,6 +1350,53 @@ definitions:
         - "PLAIN"
         - "BASE64"
         - "HEX"
+  Alert:
+    type: "object"
+    properties:
+      alertType:
+        type: "string"
+        readOnly: true
+        enum:
+        - "CERT_ABOUT_TO_EXPIRE"
+        - "CERT_EXPIRED"
+        - "OUT_OF_SYNC"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
+      title:
+        type: "string"
+        readOnly: true
+  AlertsSummary:
+    type: "object"
+    properties:
+      category:
+        type: "string"
+        readOnly: true
+        enum:
+        - "CLIENTS"
+        - "SYSTEM"
+        - "KEYS"
+      alertType:
+        type: "string"
+        readOnly: true
+        enum:
+        - "CERT_ABOUT_TO_EXPIRE"
+        - "CERT_EXPIRED"
+        - "OUT_OF_SYNC"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
+      counter:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      title:
+        type: "string"
+        readOnly: true
   AlternativeNames:
     type: "object"
     required:
@@ -1413,7 +1418,7 @@ definitions:
     type: "object"
     properties:
       padding:
-        description: "the padding information"
+        description: "Padding information"
         $ref: "#/definitions/Padding"
       hash:
         type: "string"
@@ -1475,7 +1480,7 @@ definitions:
         description: "child number"
       hardened:
         type: "boolean"
-        description: "Is hardened or not"  
+        description: "True if hardened"
   CertificateInfo:
     type: "object"
     required:
@@ -1589,7 +1594,7 @@ definitions:
         description: "Derivation data"
       isPrefix:
         type: "boolean"
-        description: "Is prefix mode or not (suffix)"           
+        description: "True for prefix, false for suffix"
   DecryptData:
     type: "object"
     required:
@@ -1599,7 +1604,7 @@ definitions:
         description: "Asymmetric cryptographic parameters for symmetric keys"
         $ref: "#/definitions/AsymmetricCryptoParams"
       symmetricParams:
-        description: "symmetric cryptographic parameters for symmetric keys"
+        description: "Symmetric cryptographic parameters for symmetric keys"
         $ref: "#/definitions/SymmetricCryptoParams"
       cipher:
         description: "the cipher to decrypt"
@@ -1660,36 +1665,6 @@ definitions:
         description: "Concat derivation parameters"
         $ref: "#/definitions/ConcatDerivationParams"
     description: "Input for a derive operation"
-  ECCBipKeyInfo:
-    type: "object"
-    properties:
-      level:
-        type: "string"
-        format: "byte"
-        description: "level (0 for master)"
-        readOnly: true
-      childNumber:
-        type: "integer"
-        format: "int32"
-        description: "child number"
-        readOnly: true
-      hardened:
-        type: "boolean"
-        description: "is hardened or not"
-        readOnly: true
-      chainCode:
-        type: "string"
-        description: "BASE64 chain code"
-        readOnly: true
-      parentUid:
-        type: "string"
-        description: "the parent uid"
-        readOnly: true
-      parentFingerprint:
-        type: "integer"
-        format: "int32"
-        description: "parent fingerprint (The first 32 bits of the identifier)"
-        readOnly: true
   ECCKeyInfoType:
     type: "object"
     required:
@@ -1706,9 +1681,6 @@ definitions:
       ecPoint:
         type: "string"
         description: "Encoded public key (EC point)"
-      eccBipKeyInfo:
-        description: "ECC BIP info"
-        $ref: "#/definitions/ECCBipKeyInfo"
     description: "Details of ECC public key"
   EncryptData:
     type: "object"
@@ -1719,7 +1691,7 @@ definitions:
         description: "Asymmetric cryptographic parameters for symmetric keys"
         $ref: "#/definitions/AsymmetricCryptoParams"
       symmetricParams:
-        description: "symmetric cryptographic parameters for symmetric keys"
+        description: "Symmetric cryptographic parameters for symmetric keys"
         $ref: "#/definitions/SymmetricCryptoParams"
       clearText:
         type: "string"
@@ -1804,9 +1776,11 @@ definitions:
         - "TDES"
         - "HMAC"
         - "SIV"
+        - "XTS"
         - "PRF"
         - "PWD"
         - "LIMA"
+        - "EDDSA"
       size:
         type: "integer"
         format: "int32"
@@ -1814,15 +1788,12 @@ definitions:
         description: "key size"
       curve:
         type: "string"
-        description: "requited for ecliptic curve"
+        description: "Required for ecliptic curve"
         enum:
         - "P256"
         - "P384"
         - "P521"
         - "SECP_256K_1"
-      offlineEcdsaParams:
-        description: "Required for offline ECDSA keys"
-        $ref: "#/definitions/OfflineEcdsaParams"
   KeyInfo:
     type: "object"
     properties:
@@ -1853,16 +1824,20 @@ definitions:
         $ref: "#/definitions/KeyProperties"
       local:
         type: "boolean"
-        description: "Was this key created inside UKC or imported"
+        description: "True if this key was created inside UKC, false when imported"
         readOnly: true
       hasCertificate:
         type: "boolean"
-        description: "Does this key have a matching certificate in UKC"
+        description: "True if this key has a matching certificate in UKC"
         readOnly: true
       certificateOnly:
         type: "boolean"
-        description: "Does this certificate not have a matching certificate in\
-          \ UKC"
+        description: "True if this certificate does not have a matching certificate\
+          \ in UKC"
+        readOnly: true
+      sync:
+        type: "boolean"
+        description: "This key is synchronized in within the UKC pair"
         readOnly: true
       prev:
         type: "string"
@@ -1886,6 +1861,11 @@ definitions:
         type: "string"
         description: "Last update date"
         readOnly: true
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
     description: "Key object details"
   KeyProperties:
     type: "object"
@@ -1895,7 +1875,7 @@ definitions:
         description: "Description for the key"
       supportedOperations:
         type: "array"
-        description: "The key Supported operations"
+        description: "Key Supported operations"
         items:
           type: "string"
           enum:
@@ -1908,7 +1888,7 @@ definitions:
           - "DERIVE"
       trusted:
         type: "boolean"
-        description: "Is the key trusted"
+        description: "True if the key is trusted"
       exportType:
         type: "string"
         enum:
@@ -1921,10 +1901,10 @@ definitions:
     properties:
       id:
         type: "string"
-        description: "The key ID"
+        description: "Key ID"
       description:
         type: "string"
-        description: "The key description"
+        description: "Key description"
   Label:
     type: "object"
     required:
@@ -2013,7 +1993,7 @@ definitions:
     properties:
       keyId:
         type: "string"
-        description: "An id for the new key"
+        description: "An ID for the new key"
         minLength: 1
       keyFormat:
         $ref: "#/definitions/KeyFormat"
@@ -2031,7 +2011,7 @@ definitions:
         minLength: 1
       description:
         type: "string"
-        description: "the secret description"
+        description: "The secret description"
   NewSecret:
     type: "object"
     required:
@@ -2065,22 +2045,6 @@ definitions:
         description: "OAEP label, default encoding as PLAIN"
         $ref: "#/definitions/Label"
     description: "OAEP padding parameters"
-  OfflineEcdsaParams:
-    type: "object"
-    required:
-    - "keepKeyMaterial"
-    - "paillierKey"
-    properties:
-      backup:
-        type: "string"
-        description: "BASE64 ECDSA offline backup"
-        readOnly: true
-      paillierKey:
-        type: "string"
-        description: "ECDSA offline Paillier key public key"
-      keepKeyMaterial:
-        type: "boolean"
-        description: "Save the key material"
   PKInfoType:
     type: "object"
     properties:
@@ -2094,7 +2058,7 @@ definitions:
     properties:
       mgf:
         type: "string"
-        description: "the mgf hash algorithm"
+        description: "MGF hash algorithm"
         enum:
         - "SHA1"
         - "SHA256"
@@ -2190,10 +2154,10 @@ definitions:
     properties:
       id:
         type: "string"
-        description: "The key ID"
+        description: "Key ID"
       description:
         type: "string"
-        description: "The key description"
+        description: "Key description"
   SignData:
     type: "object"
     required:
@@ -2279,6 +2243,29 @@ definitions:
         - "PLAIN"
         - "BASE64"
         - "HEX"
+  UnwrapData:
+    type: "object"
+    required:
+    - "keyData"
+    - "wrappedKey"
+    properties:
+      aSymmetricParams:
+        description: "Asymmetric cryptographic parameters for symmetric keys"
+        $ref: "#/definitions/AsymmetricCryptoParams"
+      symmetricParams:
+        description: "Symmetric cryptographic parameters for symmetric keys"
+        $ref: "#/definitions/SymmetricCryptoParams"
+      keyData:
+        type: "string"
+        description: "optional key data to import"
+        minLength: 1
+      wrappedKey:
+        type: "string"
+        description: "the encrypted wrapped key"
+        minLength: 1
+      keyProperties:
+        $ref: "#/definitions/KeyProperties"
+    description: "Input for unwrap operation"
   UpdatedSecret:
     type: "object"
     required:
