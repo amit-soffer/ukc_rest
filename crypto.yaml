@@ -1,20 +1,124 @@
 ---
 swagger: "2.0"
 info:
-  description: "The UKC Crypto API provides cryptographic services used with keys managed by UKC.\n\n# Common Errors\nAny API call can result in one of\
-    \ the following general HTTP codes\n- 500 - General server error\n- 404 - Resource\
-    \ not found. Verify that the url exists\n- 401 - Unauthorized"
-  version: "2.0.1810"
-  title: "Unbound Key Control Server"
+  description: "The UKC Crypto API provides cryptographic services used with Keys\
+    \ \nmanaged by UKC.\n\n\n# UKC API Overview\n\n\n## Authentication Types\n\nMost\
+    \ UKC API operations require an authorization context and user\npermissions. Users\
+    \ are identified by an authentication token attached to the\nrequest headers.\n\
+    \n### Basic Authentication\n\nUKC supports the basic authentication scheme. The\
+    \ \"Basic\" HTTP\nauthentication scheme is defined in  RFC 7617, which transmits\
+    \ credentials\nas user/password pairs, encoded using base64 in the HTTP Authorization\n\
+    header.\n\n\nThe user ID can include the required partition in the format:\n\n\
+    `username@partitionId:password`\n\n### Authentication Token\n\nThe system can\
+    \ authenticate the user with a generated authentication token,\nwhich is valid\
+    \ for a limited time. This token eliminates the need to\ntransmit the  username/password\
+    \ on every request. See `GET /authToken` for\nmore information.\n\n### Authentication\
+    \ Failure (unauthorized)\n\nIf an operation is unauthorized, an HTTP 401 status\
+    \ code is returned with\nthe `WWW-Authenticate` header.\n\n## Partitioning\n\n\
+    UKC objects are organized into partitions. Partitioning allows namespacing\nand\
+    \ access control to objects by configuring users with roles per partition.\n\n\
+    \nThe objects contained in a partition are: \n\nUsers, Clients, Keys, Certificates,\
+    \ Secrets and other partitions\n\n### Permissions\n\nAny partition can have many\
+    \ users who can access its objects.\n\nA partition user can have one of two security\
+    \ roles:\n\n- **so** - Security Officer. Can perform all operations on the partition\n\
+    objects including administration: adding, modifying and deleting objects.\n\n\
+    - **user** - Can only perform cryptographic operations with the partition\nobjects,\
+    \ such as sign and verify, and can also edit keys, certificates and\nsecrets.\n\
+    \n### Root Partition\n\nThe default built-in partition for an UKC cluster is called\
+    \ `root` and is\ncreated automatically when setting up a new UKC cluster.\n\n\
+    ### Partition Hierarchy\n\n- __Parent partition__ - Any partition, _except_ the\
+    \ root partition, has one\nparent partition.\n\n- __Permissions inheritance__\
+    \ - User access permissions can be configured to\nbe _inherited_ from the parent\
+    \ partition. For example, a user `userA`, which\nis an SO on `partitionA`, would\
+    \ also have SO permissions on `partitionB` if\n`partitionB` is child of `partitionA`.\n\
+    \t- __Note:__ By default, access permissions are not inherited from the parent\
+    \ partition. To use permission inheritance, it should be configured explicitly.\n\
+    \  \n### Default Partition Context\n\nFor every request the _default partition_\
+    \ is the home partition of the\nconnected user.\n\n\nFor example:\n  - `so@partitionA`\
+    \ - the default partition is `partitionA`.\n  - `user@partitionA.partitionB` -\
+    \ the default partition is `partitionB`, which is a child of `partitionA`.\n \
+    \ - `so@partitionB` - the default partition is `partitionB`, which is child of\
+    \ the root partition.\n  \n### Object Path\n\n- A UKC object, such as User or\
+    \ Key, can be referenced by its unique object\npath, which may be absolute or\
+    \ relative to the default partition.\n\n- The object path is unique per object\
+    \ type. Therefore, within one partition\nthere can be two objects represented\
+    \ by the same path, one is a key and one\nis a user.\n\n- UKC object path is composed\
+    \ of a series of path components separated by\nthe dot character (`.`).\n\n- A\
+    \ path component may represent a partition name or object name.\n  - The last\
+    \ component in a path is an object name.\n- An absolute path starts with the tilde\
+    \ character `~` which represents the\nroot partition.\n  - For example, to delete\
+    \ a key named `keyA` that is contained in a partition `partitionC`:\n  `DELETE\
+    \ https://myukcserver.com/keys/~.partitionC.keyA`\n- A relative path uses the\
+    \ current default partition as the root of the\nspecified path. \n  - If a user\
+    \ is logged in as `so@partitionC`, he can perform the same delete action as in\
+    \ the previous example with:\n  `DELETE https://myukcserver.com/keys/keyA`.\n\
+    \  - If the user is logged in as `so@root`, he can use the following as its relative\
+    \ to the root partition:\n  `DELETE https://myukcserver.com/keys/partitionC.keyA`\
+    \ \n  \n## Object IDs\n\nMany operations require an object ID as part of the resource\
+    \ URI. Object ids\ncan be one of:\n\n- An object __UUID__ where applicable. This\
+    \ ID is a server generated ID,\nwhich is unique per object type.\n  - __Note:__\
+    \ Objects of different types can have the same UUID. For example, user A and key\
+    \ A. That is due to the fact that UUIDs are unique only per object type.\n- An\
+    \ object relative or absolute path as specified above.\n\n## Quorum\n\nThe UKC\
+    \ can be configured to require quorum approval for certain operations. In case\
+    \ the operation you are executing requires it, the http result would be 202 (ACCEPTED)\
+    \ and a quorum job object.\n\nUse the `jobs` API in order to manage approvals\
+    \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
+    \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
+    \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
+  version: "1.0-SNAPSHOT"
+  title: "Unbound Cey Control Server"
   termsOfService: ""
   contact:
     name: "UKC Administration API"
 tags:
+- name: "General"
 - name: "Keys"
 - name: "Secrets"
 schemes:
 - "https"
 paths:
+  /api/v1/health:
+    get:
+      tags:
+      - "General"
+      summary: "Check if the UKC server is alive and functioning properly"
+      description: "Return health status of the system and determine if it is usable.\
+        \ As long as the HTTP return code is OK, the system is usable."
+      operationId: "getHealth"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "string"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/info:
+    get:
+      tags:
+      - "General"
+      summary: "Return system information"
+      description: "Including version and supported capabilities. If authentication\
+        \ is provided, returns the allowed operations."
+      operationId: "getSystemInfo"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/SystemInfo"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/keys:
     get:
       tags:
@@ -131,7 +235,7 @@ paths:
         type: "string"
       - name: "trusted"
         in: "formData"
-        description: "trusted (yes or no)"
+        description: "trusted (yes or not)"
         required: false
         type: "boolean"
       - name: "keyOnly"
@@ -181,7 +285,7 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Generate new asymmetric key, key format is provided as a parameter"
+      summary: "Generate  new asymmetric key, key format is provided as a parameter"
       description: "Generate a new key based on provided parameters"
       operationId: "generateKey"
       consumes:
@@ -941,6 +1045,78 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/pair/health:
+    get:
+      tags:
+      - "General"
+      summary: "Check if the UKC pair is alive and functioning properly"
+      description: "Return health status of the pair and determine if it is usable"
+      operationId: "getPairHealth"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "string"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/random:
+    get:
+      tags:
+      - "General"
+      summary: "Return random bytes from the UKC server. By default it returns 32\
+        \ bytes, unless size is specified."
+      description: "The UKC random number generator is combined from different entropy\
+        \ sources of the different servers in the UKC cluster"
+      operationId: "generateRandom"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "size"
+        in: "query"
+        description: "Size (in bytes) of random bytes to return"
+        required: false
+        type: "integer"
+        default: 32
+        maximum: 1024
+        minimum: 32
+        format: "int32"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/RandomEntropyBytes"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/random/entropy-bytes:
+    put:
+      tags:
+      - "General"
+      summary: "Add random bytes to the UKC entropy source"
+      description: "Different clients can add entropy to the server. Collecting entropy\
+        \ from the clients can enhance the strength of the UKC random number generator.\
+        \ This function only adds entropy, i.e. if the provided value has no entropy,\
+        \ it does not harm the generator quality"
+      operationId: "addRandomEntropyBytes"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Random bytes"
+        required: false
+        schema:
+          $ref: "#/definitions/RandomEntropyBytes"
+      responses:
+        200:
+          description: "OK"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/secrets:
     get:
       tags:
@@ -951,6 +1127,11 @@ paths:
       produces:
       - "application/json"
       parameters:
+      - name: "id"
+        in: "query"
+        description: "Key id"
+        required: false
+        type: "string"
       - name: "partitionId"
         in: "query"
         description: "Partition ID"
@@ -985,17 +1166,17 @@ paths:
         type: "string"
       - name: "newSecret"
         in: "formData"
-        description: "Secret data"
+        description: "secret data"
         required: true
         type: "file"
       - name: "id"
         in: "formData"
-        description: "Secret ID"
+        description: "secret id"
         required: true
         type: "string"
       - name: "description"
         in: "formData"
-        description: "Key description"
+        description: "key description"
         required: false
         type: "string"
       responses:
@@ -1322,12 +1503,74 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/self.cer:
+    get:
+      tags:
+      - "General"
+      summary: "Return specific server certificate"
+      description: "Download this specific server certificate. It is used for registering\
+        \ new servers"
+      operationId: "selfCertGet"
+      produces:
+      - "application/x-x509-user-cert"
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "file"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/server-ca.p7b:
+    get:
+      tags:
+      - "General"
+      summary: "Return UKC root CA certificate"
+      description: "Download the root CA certificate of UKC"
+      operationId: "getCaCert"
+      produces:
+      - "application/x-pkcs7-certificates"
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "file"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/trust:
+    get:
+      tags:
+      - "General"
+      summary: "Get all trusted certificates"
+      description: ""
+      operationId: "getTrust"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "detailed"
+        in: "query"
+        description: "Detailed"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/SystemCertificate"
+      security:
+      - basicAuth: []
+      - Authorization: []
 securityDefinitions:
   Authorization:
     description: "For accessing the API a valid JWT token must be passed in all the\
       \ queries in\nthe 'Authorization' header.\nA valid JWT token is generated by\
       \ the API and returned as answer of a call\nto the route /login giving a valid\
-      \ user & password.\nThe following syntax must be \nused in the 'Authorization'\
+      \ user and password.\nThe following syntax must be \nused in the 'Authorization'\
       \ header :\n       Bearer: xxxxxx.yyyyyyy.zzzzzz"
     type: "apiKey"
     name: "Authorization"
@@ -1360,6 +1603,7 @@ definitions:
         - "CERT_ABOUT_TO_EXPIRE"
         - "CERT_EXPIRED"
         - "OUT_OF_SYNC"
+        - "IS_LOCKED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1385,6 +1629,7 @@ definitions:
         - "CERT_ABOUT_TO_EXPIRE"
         - "CERT_EXPIRED"
         - "OUT_OF_SYNC"
+        - "IS_LOCKED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1418,7 +1663,7 @@ definitions:
     type: "object"
     properties:
       padding:
-        description: "Padding information"
+        description: "the padding information"
         $ref: "#/definitions/Padding"
       hash:
         type: "string"
@@ -1665,11 +1910,42 @@ definitions:
         description: "Concat derivation parameters"
         $ref: "#/definitions/ConcatDerivationParams"
     description: "Input for a derive operation"
+  ECCBipKeyInfo:
+    type: "object"
+    properties:
+      level:
+        type: "string"
+        format: "byte"
+        description: "Level (0 for master)"
+        readOnly: true
+      childNumber:
+        type: "integer"
+        format: "int32"
+        description: "child number"
+        readOnly: true
+      hardened:
+        type: "boolean"
+        description: "True if hardened"
+        readOnly: true
+      chainCode:
+        type: "string"
+        description: "BASE64 chain code"
+        readOnly: true
+      parentUid:
+        type: "string"
+        description: "the parent uid"
+        readOnly: true
+      parentFingerprint:
+        type: "integer"
+        format: "int32"
+        description: "parent fingerprint (The first 32 bits of the identifier)"
+        readOnly: true
   ECCKeyInfoType:
     type: "object"
     required:
     - "curve"
     - "ecPoint"
+    - "eccBipKeyInfo"
     properties:
       curve:
         type: "string"
@@ -1681,6 +1957,9 @@ definitions:
       ecPoint:
         type: "string"
         description: "Encoded public key (EC point)"
+      eccBipKeyInfo:
+        description: "ECC BIP info"
+        $ref: "#/definitions/ECCBipKeyInfo"
     description: "Details of ECC public key"
   EncryptData:
     type: "object"
@@ -1794,6 +2073,9 @@ definitions:
         - "P384"
         - "P521"
         - "SECP_256K_1"
+      offlineEcdsaParams:
+        description: "Required for offline ECDSA keys"
+        $ref: "#/definitions/OfflineEcdsaParams"
   KeyInfo:
     type: "object"
     properties:
@@ -1875,7 +2157,7 @@ definitions:
         description: "Description for the key"
       supportedOperations:
         type: "array"
-        description: "Key Supported operations"
+        description: "The key Supported operations"
         items:
           type: "string"
           enum:
@@ -2045,6 +2327,22 @@ definitions:
         description: "OAEP label, default encoding as PLAIN"
         $ref: "#/definitions/Label"
     description: "OAEP padding parameters"
+  OfflineEcdsaParams:
+    type: "object"
+    required:
+    - "keepKeyMaterial"
+    - "paillierKey"
+    properties:
+      backup:
+        type: "string"
+        description: "BASE64 ECDSA offline backup"
+        readOnly: true
+      paillierKey:
+        type: "string"
+        description: "ECDSA offline Paillier key public key"
+      keepKeyMaterial:
+        type: "boolean"
+        description: "True when saving the key material"
   PKInfoType:
     type: "object"
     properties:
@@ -2058,7 +2356,7 @@ definitions:
     properties:
       mgf:
         type: "string"
-        description: "MGF hash algorithm"
+        description: "the mgf hash algorithm"
         enum:
         - "SHA1"
         - "SHA256"
@@ -2098,6 +2396,16 @@ definitions:
         type: "string"
         description: "HEX encoded modulus"
     description: "Details of RSA public key"
+  RandomEntropyBytes:
+    type: "object"
+    required:
+    - "entropy"
+    properties:
+      entropy:
+        type: "string"
+        description: "base64 encoded entropy bytes"
+        minLength: 1
+    description: "Random Entropy Bytes"
   SealData:
     type: "object"
     required:
@@ -2229,6 +2537,130 @@ definitions:
       tagLength:
         type: "integer"
         format: "int32"
+  SystemCertificate:
+    type: "object"
+    required:
+    - "id"
+    - "isCa"
+    - "isSelfSigned"
+    - "issuer"
+    - "pkInfo"
+    - "serial"
+    - "sha1Thumbprint"
+    - "signature"
+    - "signatureAlgorithm"
+    - "subject"
+    - "uid"
+    - "validFrom"
+    - "validUntil"
+    - "version"
+    properties:
+      id:
+        type: "string"
+        example: "my-certificate"
+        description: "Certificate identifier label"
+      role:
+        type: "string"
+        description: "The server certificate role (EP,PARTNER,AUXILIARY,ROOT_CA)"
+        readOnly: true
+        enum:
+        - "ROOT_CA"
+        - "ENTRYPOINT"
+        - "PARTNER"
+        - "AUXILIARY"
+      subject:
+        type: "string"
+      validUntil:
+        type: "string"
+        description: "Date of of validity period end for this certificate"
+      subjectAlternativeNames:
+        description: "Subject Alternative Names Extension"
+        $ref: "#/definitions/AlternativeNames"
+      version:
+        type: "string"
+        example: "V3"
+        description: "Certificate version"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
+      uid:
+        type: "string"
+      serial:
+        type: "string"
+        example: "185fb61e97f55b19"
+        description: "Certificate serial number"
+      signatureAlgorithm:
+        type: "string"
+        example: "sha256RSA"
+        description: "Signing algorithm used for signing this certificate"
+      issuer:
+        type: "string"
+        description: "The CA that signed this certificate"
+      validFrom:
+        type: "string"
+        description: "Date of of validity period start for this certificate"
+      pkInfo:
+        $ref: "#/definitions/PKInfoType"
+      basicConstraints:
+        description: "Basic Constraints Extension"
+        $ref: "#/definitions/BasicConstraints"
+      subjectKeyIdentifier:
+        description: "Subject Key Identifier Extension"
+        $ref: "#/definitions/SubjectKeyIdentifier"
+      authorityKeyIdentifier:
+        description: "Authority Key Identifier Extension"
+        $ref: "#/definitions/AuthorityKeyIdentifier"
+      issuerAlternativeNames:
+        description: "Issuer Alternative Names Extension"
+        $ref: "#/definitions/AlternativeNames"
+      extendedKeyUsage:
+        description: "Extended Key Usage Extension"
+        $ref: "#/definitions/ExtendedKeyUsage"
+      sha1Thumbprint:
+        type: "string"
+        description: "certificate sha1"
+      signature:
+        type: "string"
+        description: "CA signature value for this certificate"
+      isCa:
+        type: "boolean"
+        description: "Determines if this certificate is a CA certificate"
+      isSelfSigned:
+        type: "boolean"
+        description: "Determines if this certificate is a self signed certificate"
+    description: "Certificate public information"
+  SystemInfo:
+    type: "object"
+    properties:
+      version:
+        type: "string"
+        example: "2.0.1"
+        description: "UKC server version"
+        readOnly: true
+      allowedOperations:
+        type: "array"
+        example: "{Create,Destroy,Sign,...}"
+        description: "A list of operation Id's that represent the operations that\
+          \ the current user is allowed to use. Should match the operation Id's as\
+          \ specified in this document"
+        readOnly: true
+        items:
+          type: "string"
+      allowedPartitions:
+        type: "array"
+        example: "{part1,parr2,...}"
+        description: "the partitions on which the user can contact them"
+        readOnly: true
+        items:
+          type: "string"
+      alerts:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/AlertsSummary"
+    description: "Include information on UKC server"
   UnSealData:
     type: "object"
     required:
