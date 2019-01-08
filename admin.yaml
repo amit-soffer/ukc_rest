@@ -1,69 +1,74 @@
 ---
 swagger: "2.0"
 info:
-  description: "The UKC Administration API allows managing Unbound Key Control configuration\
-    \ and objects.\n\
-    \n# UKC Authentication\nMost UKC API operations require an authorization context and\
-    \ user permissions. Users are identified by an authentication token attached to\
-    \ the request headers.\n## Basic Authentication\nUKC supports the Basic authentication\
-    \ scheme\nThe \"Basic\" HTTP authentication scheme is defined in RFC 7617, which\
-    \ transmits credentials as user/password pairs, encoded using base64 in the HTTP\
-    \ Authorization header.\nThe user ID can include the required partition in the\
-    \ format `username@partitionId:password`\n## Authentication token\nThe system\
-    \ can authenticate the user with a generated authentication token which is valid\
-    \ for a limited time. This eliminates the need to transmit username/password on\
-    \ every request. see `GET /authToken` for more information.\n## Authentication\
-    \ failure (unauthorized)\nIn case an operation is unauthorized, HTTP 401 status\
-    \ code will be returned with the `WWW-Authenticate` header \n# Partitioning\n\
-    UKC Objects are organized into partitions. Partitioning allows namespacing and\
-    \ access control to objects by configuring users with roles per partition.\nThe\
-    \ objects contained in a partition are: Users, Clients, Keys, Certificates, Secrets\
-    \ and other partitions\n## Permissions\n- Any partition can have many users who\
-    \ can access it's objects\n- A partition user can have one of two security roles:\n\
-    \  - so - Security Officer. Can perform all operations on the partition objects\
-    \ including administration: adding, modifying and deleting objects.\n  - user\
-    \ - Can only perform cryptographic operations with the partition objects, for\
-    \ example, sign, verify etc... and also edit keys, certificates and secrets\n\
-    ## Root partition\n- The default built-in partition for an UKC cluster is called\
-    \ `root` and is created automatically when setting up a new UKC cluster.\n## Partition\
-    \ Hierarchy\n- __Parent partition__\n  Any partition _except_ the root partition\
-    \ has one parent partition.\n- __Permissions Inheritance__\n  User access permissions\
-    \ can be configured to be _inherited_ from the parent partition. So, for example,\
-    \ a user `userA` which is an SO on partitionA, would also have SO permissions\
-    \ on partitionB if partitionB is child of partitionA.\n  __Note:__ By default,\
-    \ access permissions are not inherited from the parent partition. In order to\
-    \ use permission inheritance, it should be configured explicitly\n## Default partition\
-    \ context\nFor every request the _default partition_ will be the home partition\
-    \ of the connected user.\nFor example:\n  - `so@partitionA` - the default partition\
-    \ will be partitionA\n  - `user@partitionA.partitionB` - the default partition\
-    \ will be partitionB which is a child of partitionA\n  - `so@partitionB` - the\
-    \ default partition will be partitionB which is child of the root partition\n\
-    ## Object path\n- An UKC object (User, Key etc...) can be referenced by it's unique\
-    \ object path which may be absolute or relative to the default partition\n- The\
-    \ object path is unique per object type. So, within one partition there can be\
-    \ two objects represented by the same path, one is a key and one is a user.\n\
-    - UKC Object path is composed of a series of path components separated by the\
-    \ dot character (`.`)\n- A path component may represent a partition name or object\
-    \ name\n  - The last component in a path is an object name\n- An absolute path\
-    \ starts with the tilde character `~` which represents the root partition\n  -\
-    \ For example to delete a key named keyA which is contained in a partition partitionC:\
-    \ `DELETE https://myukcserver.com/keys/~.partitionC.keyA`\n- A relative path uses\
-    \ the current default partition as the root of the specified path. So, \n  - If\
-    \ a user is logged in as `so@partitionC` he can perform the same delete action\
-    \ as in the previous example with `DELETE https://myukcserver.com/keys/keyA`.\n\
-    \  - If the user is logged in as `so@root` he can use `DELETE https://myukcserver.com/keys/partitionC.keyA`\
-    \ as its relative to the root partition\n# Object Ids\nMany operations requrire\
-    \ an object ID as part of the resource URI. Objects ids can be one of:\n- An object\
-    \ __UUID__ where applicable. This is a server generated ID which is unique per\
-    \ object type.\n  - __Note__ Objects of different types can have the same UUID.\
-    \ For example, A user and A key. Thats due to the fact that UUID's are unique\
-    \ only per object type\n- An object relative or absolute path as specified above\n\
-    # Common Errors\nAny API call can result in one of the following general HTTP\
-    \ codes\n- 500 - General server error\n- 404 - Resource not found. Verify that\
-    \ the url exists\n- 401 - Unauthorized"
-  version: "2.0.1810"
+  description: "The UKC Administration API allows managing 'Unbound Key Control' configuration\
+    \ and objects.\n\n# UKC API Overview\n\n\n## Authentication Types\n\nMost UKC\
+    \ API operations require an authorization context and user\npermissions. Users\
+    \ are identified by an authentication token attached to the\nrequest headers.\n\
+    \n### Basic Authentication\n\nUKC supports the basic authentication scheme. The\
+    \ \"Basic\" HTTP\nauthentication scheme is defined in  RFC 7617, which transmits\
+    \ credentials\nas user/password pairs, encoded using base64 in the HTTP Authorization\n\
+    header.\n\n\nThe user ID can include the required partition in the format:\n\n\
+    `username@partitionId:password`\n\n### Authentication Token\n\nThe system can\
+    \ authenticate the user with a generated authentication token,\nwhich is valid\
+    \ for a limited time. This token eliminates the need to\ntransmit the  username/password\
+    \ on every request. See `GET /authToken` for\nmore information.\n\n### Authentication\
+    \ Failure (unauthorized)\n\nIf an operation is unauthorized, an HTTP 401 status\
+    \ code is returned with\nthe `WWW-Authenticate` header.\n\n## Partitioning\n\n\
+    UKC objects are organized into partitions. Partitioning allows namespacing\nand\
+    \ access control to objects by configuring users with roles per partition.\n\n\
+    \nThe objects contained in a partition are: \n\nUsers, Clients, Keys, Certificates,\
+    \ Secrets and other partitions\n\n### Permissions\n\nAny partition can have many\
+    \ users who can access its objects.\n\nA partition user can have one of two security\
+    \ roles:\n\n- **so** - Security Officer. Can perform all operations on the partition\n\
+    objects including administration: adding, modifying and deleting objects.\n\n\
+    - **user** - Can only perform cryptographic operations with the partition\nobjects,\
+    \ such as sign and verify, and can also edit keys, certificates and\nsecrets.\n\
+    \n### Root Partition\n\nThe default built-in partition for an UKC cluster is called\
+    \ `root` and is\ncreated automatically when setting up a new UKC cluster.\n\n\
+    ### Partition Hierarchy\n\n- __Parent partition__ - Any partition, _except_ the\
+    \ root partition, has one\nparent partition.\n\n- __Permissions inheritance__\
+    \ - User access permissions can be configured to\nbe _inherited_ from the parent\
+    \ partition. For example, a user `userA`, which\nis an SO on `partitionA`, would\
+    \ also have SO permissions on `partitionB` if\n`partitionB` is child of `partitionA`.\n\
+    \t- __Note:__ By default, access permissions are not inherited from the parent\
+    \ partition. To use permission inheritance, it should be configured explicitly.\n\
+    \  \n### Default Partition Context\n\nFor every request the _default partition_\
+    \ is the home partition of the\nconnected user.\n\n\nFor example:\n  - `so@partitionA`\
+    \ - the default partition is `partitionA`.\n  - `user@partitionA.partitionB` -\
+    \ the default partition is `partitionB`, which is a child of `partitionA`.\n \
+    \ - `so@partitionB` - the default partition is `partitionB`, which is child of\
+    \ the root partition.\n  \n### Object Path\n\n- A UKC object, such as User or\
+    \ Key, can be referenced by its unique object\npath, which may be absolute or\
+    \ relative to the default partition.\n\n- The object path is unique per object\
+    \ type. Therefore, within one partition\nthere can be two objects represented\
+    \ by the same path, one is a key and one\nis a user.\n\n- UKC object path is composed\
+    \ of a series of path components separated by\nthe dot character (`.`).\n\n- A\
+    \ path component may represent a partition name or object name.\n  - The last\
+    \ component in a path is an object name.\n- An absolute path starts with the tilde\
+    \ character `~` which represents the\nroot partition.\n  - For example, to delete\
+    \ a key named `keyA` that is contained in a partition `partitionC`:\n  `DELETE\
+    \ https://myukcserver.com/keys/~.partitionC.keyA`\n- A relative path uses the\
+    \ current default partition as the root of the\nspecified path. \n  - If a user\
+    \ is logged in as `so@partitionC`, he can perform the same delete action as in\
+    \ the previous example with:\n  `DELETE https://myukcserver.com/keys/keyA`.\n\
+    \  - If the user is logged in as `so@root`, he can use the following as its relative\
+    \ to the root partition:\n  `DELETE https://myukcserver.com/keys/partitionC.keyA`\
+    \ \n  \n## Object IDs\n\nMany operations require an object ID as part of the resource\
+    \ URI. Object ids\ncan be one of:\n\n- An object __UUID__ where applicable. This\
+    \ ID is a server generated ID,\nwhich is unique per object type.\n  - __Note:__\
+    \ Objects of different types can have the same UUID. For example, user A and key\
+    \ A. That is due to the fact that UUIDs are unique only per object type.\n- An\
+    \ object relative or absolute path as specified above.\n\n## Quorum\n\nThe UKC\
+    \ can be configured to require quorum approval for certain operations. In case\
+    \ the operation you are executing requires it, the http result would be 202 (ACCEPTED)\
+    \ and a quorum job object.\n\nUse the `jobs` API in order to manage approvals\
+    \ for different jobs.\n\n\n## Common Errors\nAny API call can result in one of\
+    \ the following general HTTP codes:\n- 500 - General server error\n- 404 - Resource\
+    \ not found. Verify that the url exists\n- 401 - Unauthorized"
+  version: "2.0.1811"
   title: "UKC Admin API"
-  termsOfService: ""
+  termsOfService: "Please read on https://example.com/terms-of-service"
   contact: {}
 tags:
 - name: "Authentication"
@@ -411,6 +416,8 @@ paths:
       responses:
         200:
           description: "OK"
+          schema:
+            type: "string"
       security:
       - basicAuth: []
       - Authorization: []
@@ -619,6 +626,22 @@ paths:
           description: "Password changed successfully"
         400:
           description: "New password does not comply with password policy rules"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/pair/health:
+    get:
+      tags:
+      - "General"
+      summary: "Check if the UKC pair is alive and functioning properly"
+      description: "Return health status of the pair and determine if it is usable"
+      operationId: "getPairHealth"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "string"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1505,7 +1528,7 @@ securityDefinitions:
     description: "For accessing the API a valid JWT token must be passed in all the\
       \ queries in\nthe 'Authorization' header.\nA valid JWT token is generated by\
       \ the API and returned as answer of a call\nto the route /login giving a valid\
-      \ user & password.\nThe following syntax must be \nused in the 'Authorization'\
+      \ user and password.\nThe following syntax must be \nused in the 'Authorization'\
       \ header :\n       Bearer: xxxxxx.yyyyyyy.zzzzzz"
     type: "apiKey"
     name: "Authorization"
@@ -1523,6 +1546,7 @@ definitions:
         - "CERT_ABOUT_TO_EXPIRE"
         - "CERT_EXPIRED"
         - "OUT_OF_SYNC"
+        - "IS_LOCKED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1548,6 +1572,7 @@ definitions:
         - "CERT_ABOUT_TO_EXPIRE"
         - "CERT_EXPIRED"
         - "OUT_OF_SYNC"
+        - "IS_LOCKED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1790,7 +1815,7 @@ definitions:
       version:
         type: "string"
         description: "Client version"
-    description: "A UKC new client"
+    description: "A new UKC client"
   ClientsUpdates:
     type: "object"
     properties:
@@ -2153,7 +2178,12 @@ definitions:
         enum:
         - "SO"
         - "USER"
-    description: "A UKC new user"
+      authType:
+        type: "string"
+        enum:
+        - "STANDARD"
+        - "LDAP"
+    description: "A new UKC user"
   PKInfoType:
     type: "object"
     properties:
@@ -2513,7 +2543,7 @@ definitions:
           type: "string"
       allowedPartitions:
         type: "array"
-        example: "{part1, part2, ...}"
+        example: "{part1,parr2,...}"
         description: "the partitions on which the user can contact them"
         readOnly: true
         items:
@@ -2550,7 +2580,7 @@ definitions:
         readOnly: true
         items:
           $ref: "#/definitions/Server"
-    description: "A UKC servers topology"
+    description: "A UKC server topology"
   User:
     type: "object"
     properties:
@@ -2571,13 +2601,16 @@ definitions:
       createdAt:
         type: "string"
         readOnly: true
-      internal:
-        type: "boolean"
-        readOnly: true
       retries:
         type: "integer"
         format: "int32"
         readOnly: true
+      authType:
+        type: "string"
+        readOnly: true
+        enum:
+        - "STANDARD"
+        - "LDAP"
       isLoginLocked:
         type: "boolean"
         readOnly: true
