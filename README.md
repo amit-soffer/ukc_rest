@@ -4,5 +4,5 @@ Unbound Key Control (**UKC**) supports a complete set of simplified REST calls f
 [UKC_REST_API_Getting_Started](UKC_REST_API_Getting_Started.md) gives a short tutorial on how to get started with the REST API.
 
 Detailed information about the APIs can be found here:
-+ HTML: [admin.html](https://unboundtech.com/docs/ukc_rest/admin-2.0.1810.html) and [crypto.html](https://unboundtech.com/docs/ukc_rest/crypto-2.0.1810.html)
++ HTML: [admin.html](https://unboundtech.com/docs/ukc_rest/admin-2.0.1811.html) and [crypto.html](https://unboundtech.com/docs/ukc_rest/crypto-2.0.1811.html)
 + YAML: [admin.yaml](https://github.com/unbound-tech/ukc_rest/blob/master/admin.yaml) and [crypto.yaml](https://github.com/unbound-tech/ukc_rest/blob/master/crypto.yaml)
