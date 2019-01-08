@@ -66,8 +66,8 @@ info:
     \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
     \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
-  version: "1.0-SNAPSHOT"
-  title: "Unbound Cey Control Server"
+  version: "2.0.1811"
+  title: "Unbound Key Control Server"
   termsOfService: ""
   contact:
     name: "UKC Administration API"
