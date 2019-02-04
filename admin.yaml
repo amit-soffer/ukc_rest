@@ -66,9 +66,9 @@ info:
     \ for different jobs.\n\n\n## Common Errors\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error\n- 404 - Resource\
     \ not found. Verify that the url exists\n- 401 - Unauthorized"
-  version: "2.0.1811"
+  version: "2.0.1812"
   title: "UKC Admin API"
-  termsOfService: "Please read on https://example.com/terms-of-service"
+  termsOfService: ""
   contact: {}
 tags:
 - name: "Authentication"
@@ -76,6 +76,7 @@ tags:
 - name: "General"
 - name: "Jobs"
 - name: "Partitions"
+- name: "Roles"
 - name: "System"
 - name: "Users"
 schemes:
@@ -210,6 +211,7 @@ paths:
       consumes:
       - "application/json"
       produces:
+      - "application/json,application/x-pkcs12,application/x-x509-user-cert"
       - "application/json"
       - "application/x-pkcs12"
       - "application/x-x509-user-cert"
@@ -412,7 +414,20 @@ paths:
       description: "Return health status of the system and determine if it is usable.\
         \ As long as the HTTP return code is OK, the system is usable."
       operationId: "getHealth"
-      parameters: []
+      parameters:
+      - name: "pairOnly"
+        in: "query"
+        description: "pairOnly"
+        required: false
+        type: "boolean"
+        default: false
+      - name: "timeout"
+        in: "query"
+        description: "Timeout"
+        required: false
+        type: "integer"
+        minimum: 0
+        format: "int32"
       responses:
         200:
           description: "OK"
@@ -636,12 +651,17 @@ paths:
       summary: "Check if the UKC pair is alive and functioning properly"
       description: "Return health status of the pair and determine if it is usable"
       operationId: "getPairHealth"
-      parameters: []
+      parameters:
+      - name: "timeout"
+        in: "query"
+        description: "Timeout"
+        required: false
+        type: "integer"
+        minimum: 0
+        format: "int32"
       responses:
         200:
           description: "OK"
-          schema:
-            type: "string"
       security:
       - basicAuth: []
       - Authorization: []
@@ -675,6 +695,7 @@ paths:
       consumes:
       - "application/json"
       produces:
+      - "application/json,application/x-pkcs12,application/x-x509-user-cert"
       - "application/json"
       - "application/x-pkcs12"
       - "application/x-x509-user-cert"
@@ -753,6 +774,7 @@ paths:
       consumes:
       - "application/json"
       produces:
+      - "application/json,application/x-pkcs12,application/x-x509-user-cert"
       - "application/json"
       - "application/x-pkcs12"
       - "application/x-x509-user-cert"
@@ -901,6 +923,165 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/roles:
+    get:
+      tags:
+      - "Roles"
+      summary: "List all roles in a partition"
+      description: "Return a list of all roles in a partition"
+      operationId: "listRoles"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "detailed"
+        in: "query"
+        description: "Detailed"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/User"
+      security:
+      - basicAuth: []
+      - Authorization: []
+    post:
+      tags:
+      - "Roles"
+      summary: "Creates a new role"
+      description: "Create a new role in a given partition"
+      operationId: "createRole"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "New Role"
+        required: false
+        schema:
+          $ref: "#/definitions/NewRole"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        201:
+          description: "Role created successfully"
+        202:
+          description: "ACCEPTED"
+          schema:
+            $ref: "#/definitions/Job"
+        409:
+          description: "Role already exists"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/roles/{roleId}:
+    get:
+      tags:
+      - "Roles"
+      summary: "Get details of an existing role"
+      description: "Return details of a role"
+      operationId: "getRole"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "roleId"
+        in: "path"
+        description: "Role ID to look for"
+        required: true
+        type: "string"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "detailed"
+        in: "query"
+        description: "Detailed"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Role"
+      security:
+      - basicAuth: []
+      - Authorization: []
+    put:
+      tags:
+      - "Roles"
+      summary: "Update Role"
+      description: "Update Role"
+      operationId: "updateRole"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "roleId"
+        in: "path"
+        description: "Role ID"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Role updates"
+        required: false
+        schema:
+          $ref: "#/definitions/UpdatedRole"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "Client Updated successfully."
+          schema:
+            $ref: "#/definitions/Role"
+        202:
+          description: "ACCEPTED"
+          schema:
+            $ref: "#/definitions/Job"
+      security:
+      - basicAuth: []
+      - Authorization: []
+    delete:
+      tags:
+      - "Roles"
+      summary: "Deletes a role"
+      description: ""
+      operationId: "deleteRole"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "roleId"
+        in: "path"
+        description: "Role ID"
+        required: true
+        type: "string"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "Role deleted successfully."
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/self.cer:
     get:
       tags:
@@ -910,6 +1091,7 @@ paths:
         \ new servers"
       operationId: "selfCertGet"
       produces:
+      - "application/x-x509-user-cert,application/json"
       - "application/x-x509-user-cert"
       - "application/json"
       parameters: []
@@ -929,6 +1111,7 @@ paths:
       description: "Download the root CA certificate of UKC"
       operationId: "getCaCert"
       produces:
+      - "application/x-pkcs7-certificates,application/json"
       - "application/x-pkcs7-certificates"
       - "application/json"
       parameters: []
@@ -1461,6 +1644,39 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+    put:
+      tags:
+      - "Users"
+      summary: "Change an existing user role"
+      description: "Return details of a user"
+      operationId: "changeUserRole"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "User ID to look for"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Role ID"
+        required: false
+        schema:
+          type: "string"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/User"
+      security:
+      - basicAuth: []
+      - Authorization: []
     delete:
       tags:
       - "Users"
@@ -1746,6 +1962,7 @@ definitions:
         enum:
         - "ACTIVATED"
         - "PENDING"
+        - "LOCKED"
       activationType:
         type: "string"
         description: "Client activation type"
@@ -1815,18 +2032,21 @@ definitions:
       version:
         type: "string"
         description: "Client version"
-    description: "A new UKC client"
+    description: "A UKC new client"
   ClientsUpdates:
     type: "object"
     properties:
       checkIp:
         type: "boolean"
+        example: false
         description: "Enforce client ip verification"
       allowNat:
         type: "boolean"
+        example: false
         description: "Allow client use NAT"
       ipRange:
         type: "string"
+        example: "0.0.0.0/0"
         description: "Client IP range"
   ECCBipKeyInfo:
     type: "object"
@@ -1998,6 +2218,7 @@ definitions:
         - "MONTHS"
         - "YEARS"
         - "CHARACTERS"
+        - "MILLIS"
     description: "Key value entry"
   NewAndExistingPassword:
     type: "object"
@@ -2026,27 +2247,34 @@ definitions:
         minLength: 1
       checkIp:
         type: "boolean"
+        example: false
         description: "Enforce client ip verification"
       allowNat:
         type: "boolean"
+        example: false
         description: "Allow client use NAT"
       certificateExpiration:
         type: "integer"
         format: "int32"
+        example: 1578240
         description: "Client certificate validity in minutes"
       activationCodeValidity:
         type: "integer"
         format: "int32"
+        example: 20
         description: "Client activation code validity in minutes"
       isTemplate:
         type: "boolean"
+        example: false
         description: "Is client is a template client or not"
       activationCodeLength:
         type: "integer"
         format: "int32"
+        example: 10
         description: "Client activation code length (digits)"
       ipRange:
         type: "string"
+        example: "0.0.0.0/0"
         description: "Client IP range"
   NewClientWithCertificate:
     type: "object"
@@ -2060,17 +2288,20 @@ definitions:
         minLength: 1
       checkIp:
         type: "boolean"
+        example: false
         description: "Enforce client ip verification"
       allowNat:
         type: "boolean"
+        example: false
         description: "Allow client use NAT"
       certificateExpiration:
         type: "integer"
         format: "int32"
+        example: 1578240
         description: "Client certificate validity in minutes"
       alternativeNames:
         type: "array"
-        example: "{clinet-ip,clinet-name}"
+        example: "{client-ip,client-name}"
         description: "Client alternative names"
         items:
           type: "string"
@@ -2119,11 +2350,27 @@ definitions:
         $ref: "#/definitions/NewClientWithCertificate"
       inherit:
         type: "boolean"
+        example: false
         description: "Inherit root partition settings"
       propagate:
         type: "boolean"
+        example: false
         description: " Support certificate propagation"
     description: "A UKC Partition"
+  NewRole:
+    type: "object"
+    required:
+    - "name"
+    properties:
+      name:
+        type: "string"
+        example: "role_name"
+        description: "role name"
+        minLength: 1
+      managedObjectsPermissions:
+        type: "array"
+        items:
+          $ref: "#/definitions/RolePermission"
   NewServer:
     type: "object"
     required:
@@ -2164,6 +2411,7 @@ definitions:
     properties:
       password:
         type: "string"
+        example: "Password1!"
         description: "The user password"
       name:
         type: "string"
@@ -2174,16 +2422,15 @@ definitions:
         description: "The user description"
       role:
         type: "string"
+        example: "user"
         description: "The user role"
-        enum:
-        - "SO"
-        - "USER"
       authType:
         type: "string"
+        example: "STANDARD"
         enum:
         - "STANDARD"
         - "LDAP"
-    description: "A new UKC user"
+    description: "A UKC new user"
   PKInfoType:
     type: "object"
     properties:
@@ -2338,18 +2585,78 @@ definitions:
       certificateExpiration:
         type: "integer"
         format: "int32"
+        example: 1578240
         description: "Client certificate validity in minutes"
       activationCodeValidity:
         type: "integer"
         format: "int32"
+        example: 20
         description: "Client activation code validity in minutes"
       activationCodeLength:
         type: "integer"
         format: "int32"
+        example: 10
         description: "Client activation code length (digits)"
       ipRange:
         type: "string"
+        example: "0.0.0.0/0"
         description: "Client IP range"
+  Role:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+        example: "role_name"
+        readOnly: true
+      partition:
+        type: "string"
+        example: "~.codeSign.developers"
+        readOnly: true
+      createdAt:
+        type: "string"
+        readOnly: true
+      updatedAt:
+        type: "string"
+        readOnly: true
+      managedObjectsPermissions:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/RolePermission"
+    description: "An ekm role"
+  RolePermission:
+    type: "object"
+    properties:
+      objectGroup:
+        type: "string"
+      operations:
+        type: "array"
+        uniqueItems: true
+        items:
+          type: "string"
+          enum:
+          - "ACTIVATE"
+          - "ADD_ATTRIBUTE"
+          - "CREATE"
+          - "CREATE_KEY_PAIR"
+          - "DECRYPT"
+          - "DELETE_ATTRIBUTE"
+          - "DERIVE_KEY"
+          - "DESTROY"
+          - "DY_DERIVE"
+          - "DY_GET_KEY_MATERIAL"
+          - "DY_GET_SECRET_DATA"
+          - "DY_UPDATE_DATA"
+          - "ENCRYPT"
+          - "MAC"
+          - "MAC_VERIFY"
+          - "MODIFY_ATTRIBUTE"
+          - "REGISTER"
+          - "REKEY"
+          - "REKEY_KEY_PAIR"
+          - "REVOKE"
+          - "SIGN"
+          - "SIGNATURE_VERIFY"
   Server:
     type: "object"
     properties:
@@ -2454,7 +2761,7 @@ definitions:
         description: "Certificate identifier label"
       role:
         type: "string"
-        description: "The server certificate role (EP,PARTNER,AUXILIARY,ROOT_CA)"
+        description: "The server certificate role (EP, PARTNER, AUXILIARY, ROOT_CA)"
         readOnly: true
         enum:
         - "ROOT_CA"
@@ -2543,7 +2850,7 @@ definitions:
           type: "string"
       allowedPartitions:
         type: "array"
-        example: "{part1,parr2,...}"
+        example: "{part1, part2, ...}"
         description: "the partitions on which the user can contact them"
         readOnly: true
         items:
@@ -2581,6 +2888,13 @@ definitions:
         items:
           $ref: "#/definitions/Server"
     description: "A UKC server topology"
+  UpdatedRole:
+    type: "object"
+    properties:
+      managedObjectsPermissions:
+        type: "array"
+        items:
+          $ref: "#/definitions/RolePermission"
   User:
     type: "object"
     properties:
@@ -2595,9 +2909,6 @@ definitions:
       role:
         type: "string"
         readOnly: true
-        enum:
-        - "SO"
-        - "USER"
       createdAt:
         type: "string"
         readOnly: true
