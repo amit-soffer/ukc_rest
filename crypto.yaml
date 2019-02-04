@@ -66,7 +66,7 @@ info:
     \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
     \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
-  version: "2.0.1811"
+  version: "2.0.1812"
   title: "Unbound Key Control Server"
   termsOfService: ""
   contact:
@@ -86,7 +86,20 @@ paths:
       description: "Return health status of the system and determine if it is usable.\
         \ As long as the HTTP return code is OK, the system is usable."
       operationId: "getHealth"
-      parameters: []
+      parameters:
+      - name: "pairOnly"
+        in: "query"
+        description: "pairOnly"
+        required: false
+        type: "boolean"
+        default: false
+      - name: "timeout"
+        in: "query"
+        description: "Timeout"
+        required: false
+        type: "integer"
+        minimum: 0
+        format: "int32"
       responses:
         200:
           description: "OK"
@@ -171,6 +184,14 @@ paths:
         description: "Is Trusted"
         required: false
         type: "boolean"
+      - name: "groups"
+        in: "query"
+        description: "Groups"
+        required: false
+        type: "array"
+        items:
+          type: "string"
+        collectionFormat: "multi"
       - name: "detailed"
         in: "query"
         description: "Detailed"
@@ -235,9 +256,15 @@ paths:
         type: "string"
       - name: "trusted"
         in: "formData"
-        description: "trusted (yes or not)"
+        description: "trusted (yes or no)"
         required: false
         type: "boolean"
+      - name: "groups"
+        in: "formData"
+        description: "List of groups"
+        required: false
+        type: "string"
+        collectionFormat: "multi"
       - name: "keyOnly"
         in: "formData"
         description: "import only key (no chain)"
@@ -285,7 +312,7 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Generate  new asymmetric key, key format is provided as a parameter"
+      summary: "Generate new asymmetric key, key format is provided as a parameter"
       description: "Generate a new key based on provided parameters"
       operationId: "generateKey"
       consumes:
@@ -313,6 +340,62 @@ paths:
           description: "Object already exist"
           schema:
             $ref: "#/definitions/KeyInfo"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/keys/groups:
+    get:
+      tags:
+      - "Keys"
+      summary: "Get keys groups"
+      description: ""
+      operationId: "getGroups"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "operations"
+        in: "query"
+        description: "Operations"
+        required: false
+        type: "array"
+        items:
+          type: "string"
+          enum:
+          - "ACTIVATE"
+          - "ADD_ATTRIBUTE"
+          - "CREATE"
+          - "CREATE_KEY_PAIR"
+          - "DECRYPT"
+          - "DELETE_ATTRIBUTE"
+          - "DERIVE_KEY"
+          - "DESTROY"
+          - "DY_DERIVE"
+          - "DY_GET_KEY_MATERIAL"
+          - "DY_GET_SECRET_DATA"
+          - "DY_UPDATE_DATA"
+          - "ENCRYPT"
+          - "MAC"
+          - "MAC_VERIFY"
+          - "MODIFY_ATTRIBUTE"
+          - "REGISTER"
+          - "REKEY"
+          - "REKEY_KEY_PAIR"
+          - "REVOKE"
+          - "SIGN"
+          - "SIGNATURE_VERIFY"
+        collectionFormat: "multi"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              type: "string"
       security:
       - basicAuth: []
       - Authorization: []
@@ -506,7 +589,7 @@ paths:
         type: "string"
       - in: "body"
         name: "body"
-        description: "TODO"
+        description: "Object containing a list of ciphertexts that you want to decrypt."
         required: false
         schema:
           $ref: "#/definitions/Decryptx"
@@ -628,7 +711,7 @@ paths:
         type: "string"
       - in: "body"
         name: "body"
-        description: "TODO"
+        description: "Object containing a list of plaintexts that you want to encrypt."
         required: false
         schema:
           $ref: "#/definitions/Encryptx"
@@ -713,6 +796,59 @@ paths:
           description: "OK. Verified Successfully"
         400:
           description: "Verification failed"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/keys/{keyId}/permissions:
+    get:
+      tags:
+      - "Keys"
+      summary: "Return specific allowed operations for a specific key UID."
+      description: "return specific allowed operations for a specific key UID."
+      operationId: "getKeyPermissions"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "keyId"
+        in: "path"
+        description: "Key ID to look for"
+        required: true
+        type: "string"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              type: "string"
+              enum:
+              - "ACTIVATE"
+              - "ADD_ATTRIBUTE"
+              - "CREATE"
+              - "CREATE_KEY_PAIR"
+              - "DECRYPT"
+              - "DELETE_ATTRIBUTE"
+              - "DERIVE_KEY"
+              - "DESTROY"
+              - "DY_DERIVE"
+              - "DY_GET_KEY_MATERIAL"
+              - "DY_GET_SECRET_DATA"
+              - "DY_UPDATE_DATA"
+              - "ENCRYPT"
+              - "MAC"
+              - "MAC_VERIFY"
+              - "MODIFY_ATTRIBUTE"
+              - "REGISTER"
+              - "REKEY"
+              - "REKEY_KEY_PAIR"
+              - "REVOKE"
+              - "SIGN"
+              - "SIGNATURE_VERIFY"
       security:
       - basicAuth: []
       - Authorization: []
@@ -852,7 +988,7 @@ paths:
         type: "string"
       - in: "body"
         name: "body"
-        description: "TODO"
+        description: "Data that needs to be signed."
         required: false
         schema:
           $ref: "#/definitions/SignData"
@@ -953,6 +1089,7 @@ paths:
       operationId: "getKeyData"
       produces:
       - "application/json"
+      - "application/x-pkcs12"
       parameters:
       - name: "keyId"
         in: "path"
@@ -962,6 +1099,11 @@ paths:
       - name: "partitionId"
         in: "query"
         description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "query"
+        description: "PFX Password"
         required: false
         type: "string"
       responses:
@@ -997,7 +1139,7 @@ paths:
         type: "string"
       - in: "body"
         name: "body"
-        description: "TODO"
+        description: "Data with a signature that needs to be verified."
         required: false
         schema:
           $ref: "#/definitions/VerifyData"
@@ -1052,12 +1194,17 @@ paths:
       summary: "Check if the UKC pair is alive and functioning properly"
       description: "Return health status of the pair and determine if it is usable"
       operationId: "getPairHealth"
-      parameters: []
+      parameters:
+      - name: "timeout"
+        in: "query"
+        description: "Timeout"
+        required: false
+        type: "integer"
+        minimum: 0
+        format: "int32"
       responses:
         200:
           description: "OK"
-          schema:
-            type: "string"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1137,6 +1284,14 @@ paths:
         description: "Partition ID"
         required: false
         type: "string"
+      - name: "groups"
+        in: "query"
+        description: "Groups"
+        required: false
+        type: "array"
+        items:
+          type: "string"
+        collectionFormat: "multi"
       responses:
         200:
           description: "OK"
@@ -1166,17 +1321,17 @@ paths:
         type: "string"
       - name: "newSecret"
         in: "formData"
-        description: "secret data"
+        description: "Secret data"
         required: true
         type: "file"
       - name: "id"
         in: "formData"
-        description: "secret id"
+        description: "Secret ID"
         required: true
         type: "string"
       - name: "description"
         in: "formData"
-        description: "key description"
+        description: "Key description"
         required: false
         type: "string"
       responses:
@@ -1242,6 +1397,62 @@ paths:
             $ref: "#/definitions/Secret"
         409:
           description: "Secret with this ID already exists"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/secrets/groups:
+    get:
+      tags:
+      - "Secrets"
+      summary: "Get secrets groups"
+      description: ""
+      operationId: "getSecretsGroups"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "operations"
+        in: "query"
+        description: "Operations"
+        required: false
+        type: "array"
+        items:
+          type: "string"
+          enum:
+          - "ACTIVATE"
+          - "ADD_ATTRIBUTE"
+          - "CREATE"
+          - "CREATE_KEY_PAIR"
+          - "DECRYPT"
+          - "DELETE_ATTRIBUTE"
+          - "DERIVE_KEY"
+          - "DESTROY"
+          - "DY_DERIVE"
+          - "DY_GET_KEY_MATERIAL"
+          - "DY_GET_SECRET_DATA"
+          - "DY_UPDATE_DATA"
+          - "ENCRYPT"
+          - "MAC"
+          - "MAC_VERIFY"
+          - "MODIFY_ATTRIBUTE"
+          - "REGISTER"
+          - "REKEY"
+          - "REKEY_KEY_PAIR"
+          - "REVOKE"
+          - "SIGN"
+          - "SIGNATURE_VERIFY"
+        collectionFormat: "multi"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              type: "string"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1382,6 +1593,7 @@ paths:
       consumes:
       - "application/json"
       produces:
+      - "application/json,application/octet-stream"
       - "application/json"
       - "application/octet-stream"
       parameters:
@@ -1512,6 +1724,7 @@ paths:
         \ new servers"
       operationId: "selfCertGet"
       produces:
+      - "application/x-x509-user-cert,application/json"
       - "application/x-x509-user-cert"
       - "application/json"
       parameters: []
@@ -1531,6 +1744,7 @@ paths:
       description: "Download the root CA certificate of UKC"
       operationId: "getCaCert"
       produces:
+      - "application/x-pkcs7-certificates,application/json"
       - "application/x-pkcs7-certificates"
       - "application/json"
       parameters: []
@@ -1663,7 +1877,7 @@ definitions:
     type: "object"
     properties:
       padding:
-        description: "the padding information"
+        description: "Padding information"
         $ref: "#/definitions/Padding"
       hash:
         type: "string"
@@ -2157,7 +2371,7 @@ definitions:
         description: "Description for the key"
       supportedOperations:
         type: "array"
-        description: "The key Supported operations"
+        description: "Key supported operations"
         items:
           type: "string"
           enum:
@@ -2170,6 +2384,7 @@ definitions:
           - "DERIVE"
       trusted:
         type: "boolean"
+        example: false
         description: "True if the key is trusted"
       exportType:
         type: "string"
@@ -2178,6 +2393,12 @@ definitions:
         - "WRAPPED"
         - "WRAPPED_WITH_TRUSTED"
         - "NON_EXPORTABLE"
+      groups:
+        type: "array"
+        description: "Key groups"
+        uniqueItems: true
+        items:
+          type: "string"
   KeyUpdates:
     type: "object"
     properties:
@@ -2187,6 +2408,12 @@ definitions:
       description:
         type: "string"
         description: "Key description"
+      groups:
+        type: "array"
+        description: "Key groups"
+        uniqueItems: true
+        items:
+          type: "string"
   Label:
     type: "object"
     required:
@@ -2294,6 +2521,12 @@ definitions:
       description:
         type: "string"
         description: "The secret description"
+      groups:
+        type: "array"
+        description: "Secret groups"
+        uniqueItems: true
+        items:
+          type: "string"
   NewSecret:
     type: "object"
     required:
@@ -2308,6 +2541,12 @@ definitions:
       description:
         type: "string"
         description: "The secret description"
+      groups:
+        type: "array"
+        description: "Secret groups"
+        uniqueItems: true
+        items:
+          type: "string"
       data:
         type: "string"
         example: "My secret data"
@@ -2326,7 +2565,7 @@ definitions:
       label:
         description: "OAEP label, default encoding as PLAIN"
         $ref: "#/definitions/Label"
-    description: "OAEP padding parameters"
+    description: "(Only relevant for encryption) The OAEP padding parameters"
   OfflineEcdsaParams:
     type: "object"
     required:
@@ -2356,7 +2595,7 @@ definitions:
     properties:
       mgf:
         type: "string"
-        description: "the mgf hash algorithm"
+        description: "MGF hash algorithm"
         enum:
         - "SHA1"
         - "SHA256"
@@ -2366,7 +2605,7 @@ definitions:
         type: "integer"
         format: "int32"
         description: "the salt size"
-    description: "PSS padding parameters"
+    description: "(Only relevant for signing) The PSS padding parameters"
   Padding:
     type: "object"
     required:
@@ -2449,6 +2688,12 @@ definitions:
         example: "0x00d78d6a396072e9a0"
         description: "Secret identifier"
         readOnly: true
+      groups:
+        type: "array"
+        description: "Secret groups"
+        uniqueItems: true
+        items:
+          type: "string"
       createdAt:
         type: "string"
         description: "Creation date"
@@ -2466,6 +2711,12 @@ definitions:
       description:
         type: "string"
         description: "Key description"
+      groups:
+        type: "array"
+        description: "Secret groups"
+        uniqueItems: true
+        items:
+          type: "string"
   SignData:
     type: "object"
     required:
@@ -2561,7 +2812,7 @@ definitions:
         description: "Certificate identifier label"
       role:
         type: "string"
-        description: "The server certificate role (EP,PARTNER,AUXILIARY,ROOT_CA)"
+        description: "The server certificate role (EP, PARTNER, AUXILIARY, ROOT_CA)"
         readOnly: true
         enum:
         - "ROOT_CA"
@@ -2650,7 +2901,7 @@ definitions:
           type: "string"
       allowedPartitions:
         type: "array"
-        example: "{part1,parr2,...}"
+        example: "{part1, part2, ...}"
         description: "the partitions on which the user can contact them"
         readOnly: true
         items:
