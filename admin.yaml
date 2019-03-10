@@ -66,7 +66,7 @@ info:
     \ for different jobs.\n\n\n## Common Errors\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error\n- 404 - Resource\
     \ not found. Verify that the url exists\n- 401 - Unauthorized"
-  version: "2.0.1812"
+  version: "2.0.1901"
   title: "UKC Admin API"
   termsOfService: ""
   contact: {}
@@ -104,6 +104,24 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+    delete:
+      tags:
+      - "Authentication"
+      summary: "Invalidates an authentication token"
+      description: ""
+      operationId: "invalidateAuthToken"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+        401:
+          description: "Authentication failure, the system could not verify the user\
+            \ name and password passed in the request header"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/clients:
     get:
       tags:
@@ -118,6 +136,19 @@ paths:
         in: "query"
         required: false
         type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Limit"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "skip"
+        in: "query"
+        description: "skip"
+        required: false
+        type: "integer"
+        default: 0
+        format: "int32"
       - name: "detailed"
         in: "query"
         description: "Detailed"
@@ -132,9 +163,7 @@ paths:
         200:
           description: "OK"
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Client"
+            $ref: "#/definitions/ClientListResponse"
       security:
       - basicAuth: []
       - Authorization: []
@@ -674,14 +703,25 @@ paths:
       operationId: "listPartitions"
       produces:
       - "application/json"
-      parameters: []
+      parameters:
+      - name: "limit"
+        in: "query"
+        description: "Limit"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "skip"
+        in: "query"
+        description: "skip"
+        required: false
+        type: "integer"
+        default: 0
+        format: "int32"
       responses:
         200:
           description: "OK"
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Partition"
+            $ref: "#/definitions/PartitionListResponse"
       security:
       - basicAuth: []
       - Authorization: []
@@ -938,6 +978,19 @@ paths:
         description: "Partition ID"
         required: false
         type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Limit"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "skip"
+        in: "query"
+        description: "skip"
+        required: false
+        type: "integer"
+        default: 0
+        format: "int32"
       - name: "detailed"
         in: "query"
         description: "Detailed"
@@ -947,9 +1000,7 @@ paths:
         200:
           description: "OK"
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/User"
+            $ref: "#/definitions/RoleListResponse"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1536,13 +1587,24 @@ paths:
         description: "Partition ID"
         required: false
         type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Limit"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "skip"
+        in: "query"
+        description: "skip"
+        required: false
+        type: "integer"
+        default: 0
+        format: "int32"
       responses:
         200:
           description: "OK"
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/User"
+            $ref: "#/definitions/UserListResponse"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1763,6 +1825,7 @@ definitions:
         - "CERT_EXPIRED"
         - "OUT_OF_SYNC"
         - "IS_LOCKED"
+        - "RENEW_REQUIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1789,6 +1852,7 @@ definitions:
         - "CERT_EXPIRED"
         - "OUT_OF_SYNC"
         - "IS_LOCKED"
+        - "RENEW_REQUIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1996,6 +2060,9 @@ definitions:
         type: "integer"
         format: "int32"
         description: "Client certificate validity in minutes"
+      certificateRenewRequired:
+        type: "boolean"
+        description: "Is client certificate need to be renewed"
       activationCodeValidity:
         type: "integer"
         format: "int32"
@@ -2033,6 +2100,26 @@ definitions:
         type: "string"
         description: "Client version"
     description: "A UKC new client"
+  ClientListResponse:
+    type: "object"
+    properties:
+      total:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      limit:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      skip:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      records:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/Client"
   ClientsUpdates:
     type: "object"
     properties:
@@ -2360,6 +2447,7 @@ definitions:
   NewRole:
     type: "object"
     required:
+    - "managedObjectsPermissions"
     - "name"
     properties:
       name:
@@ -2531,16 +2619,33 @@ definitions:
         readOnly: true
     description: "A partitions is used as a logical container for security objects\
       \ like keys and Certificates"
+  PartitionListResponse:
+    type: "object"
+    properties:
+      total:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      limit:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      skip:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      records:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/Partition"
   Password:
     type: "object"
-    required:
-    - "password"
     properties:
       password:
         type: "string"
         example: "Password2!"
         description: "New user password"
-        minLength: 1
     description: "A password"
   QuorumStatus:
     type: "object"
@@ -2624,6 +2729,26 @@ definitions:
         items:
           $ref: "#/definitions/RolePermission"
     description: "An ekm role"
+  RoleListResponse:
+    type: "object"
+    properties:
+      total:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      limit:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      skip:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      records:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/Role"
   RolePermission:
     type: "object"
     properties:
@@ -2839,6 +2964,9 @@ definitions:
         example: "2.0.1"
         description: "UKC server version"
         readOnly: true
+      lastActivityAt:
+        type: "string"
+        readOnly: true
       allowedOperations:
         type: "array"
         example: "{Create,Destroy,Sign,...}"
@@ -2912,6 +3040,9 @@ definitions:
       createdAt:
         type: "string"
         readOnly: true
+      lastActivityAt:
+        type: "string"
+        readOnly: true
       retries:
         type: "integer"
         format: "int32"
@@ -2926,3 +3057,23 @@ definitions:
         type: "boolean"
         readOnly: true
     description: "A UKC user"
+  UserListResponse:
+    type: "object"
+    properties:
+      total:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      limit:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      skip:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      records:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/User"
