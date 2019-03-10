@@ -66,11 +66,11 @@ info:
     \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
     \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
-  version: "2.0.1812"
-  title: "Unbound Key Control Server"
+  version: "2.0.1901"
+  title: "Unbound key control server"
   termsOfService: ""
   contact:
-    name: "UKC Administration API"
+    name: "EKM Administration API"
 tags:
 - name: "General"
 - name: "Keys"
@@ -147,6 +147,19 @@ paths:
         description: "Partition ID"
         required: false
         type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Limit"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "skip"
+        in: "query"
+        description: "skip"
+        required: false
+        type: "integer"
+        default: 0
+        format: "int32"
       - name: "id"
         in: "query"
         description: "Key id"
@@ -202,9 +215,12 @@ paths:
         200:
           description: "OK"
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/KeyInfo"
+            $ref: "#/definitions/KeyInfoListResponse"
+          headers:
+            X-total-count:
+              type: "integer"
+              format: "int32"
+              description: "total amount of keys"
       security:
       - basicAuth: []
       - Authorization: []
@@ -264,7 +280,6 @@ paths:
         description: "List of groups"
         required: false
         type: "string"
-        collectionFormat: "multi"
       - name: "keyOnly"
         in: "formData"
         description: "import only key (no chain)"
@@ -349,7 +364,7 @@ paths:
       - "Keys"
       summary: "Get keys groups"
       description: ""
-      operationId: "getGroups"
+      operationId: "getKeysGroups"
       produces:
       - "application/json"
       parameters:
@@ -1284,6 +1299,19 @@ paths:
         description: "Partition ID"
         required: false
         type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Limit"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "skip"
+        in: "query"
+        description: "skip"
+        required: false
+        type: "integer"
+        default: 0
+        format: "int32"
       - name: "groups"
         in: "query"
         description: "Groups"
@@ -1298,7 +1326,7 @@ paths:
           schema:
             type: "array"
             items:
-              $ref: "#/definitions/Secret"
+              $ref: "#/definitions/SecretListResponse"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1818,6 +1846,7 @@ definitions:
         - "CERT_EXPIRED"
         - "OUT_OF_SYNC"
         - "IS_LOCKED"
+        - "RENEW_REQUIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1844,6 +1873,7 @@ definitions:
         - "CERT_EXPIRED"
         - "OUT_OF_SYNC"
         - "IS_LOCKED"
+        - "RENEW_REQUIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -2331,6 +2361,13 @@ definitions:
         description: "True if this certificate does not have a matching certificate\
           \ in UKC"
         readOnly: true
+      state:
+        type: "string"
+        readOnly: true
+        enum:
+        - "PREACTIVE"
+        - "ACTIVE"
+        - "DEACTIVATED"
       sync:
         type: "boolean"
         description: "This key is synchronized in within the UKC pair"
@@ -2363,6 +2400,26 @@ definitions:
         enum:
         - "WARN"
     description: "Key object details"
+  KeyInfoListResponse:
+    type: "object"
+    properties:
+      total:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      limit:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      skip:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      records:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/KeyInfo"
   KeyProperties:
     type: "object"
     properties:
@@ -2702,6 +2759,26 @@ definitions:
         type: "string"
         description: "Last update date"
         readOnly: true
+  SecretListResponse:
+    type: "object"
+    properties:
+      total:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      limit:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      skip:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      records:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/Secret"
   SecretUpdates:
     type: "object"
     properties:
@@ -2889,6 +2966,9 @@ definitions:
         type: "string"
         example: "2.0.1"
         description: "UKC server version"
+        readOnly: true
+      lastActivityAt:
+        type: "string"
         readOnly: true
       allowedOperations:
         type: "array"
