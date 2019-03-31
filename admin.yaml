@@ -66,7 +66,7 @@ info:
     \ for different jobs.\n\n\n## Common Errors\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error\n- 404 - Resource\
     \ not found. Verify that the url exists\n- 401 - Unauthorized"
-  version: "2.0.1901"
+  version: "2.0.1902"
   title: "UKC Admin API"
   termsOfService: ""
   contact: {}
@@ -462,9 +462,6 @@ paths:
           description: "OK"
           schema:
             type: "string"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/info:
     get:
       tags:
@@ -486,9 +483,6 @@ paths:
           description: "OK"
           schema:
             $ref: "#/definitions/SystemInfo"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/jobs/my/status:
     get:
       tags:
@@ -691,9 +685,6 @@ paths:
       responses:
         200:
           description: "OK"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/partitions:
     get:
       tags:
@@ -1151,9 +1142,6 @@ paths:
           description: "OK"
           schema:
             type: "file"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/server-ca.p7b:
     get:
       tags:
@@ -1171,9 +1159,6 @@ paths:
           description: "OK"
           schema:
             type: "file"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/servers/new/auxiliary:
     get:
       tags:
@@ -1569,9 +1554,6 @@ paths:
           description: "OK"
           schema:
             $ref: "#/definitions/SystemCertificate"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/users:
     get:
       tags:
