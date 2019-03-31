@@ -66,11 +66,11 @@ info:
     \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
     \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
-  version: "2.0.1901"
-  title: "Unbound key control server"
+  version: "2.0.1902"
+  title: "Unbound Key Control Server"
   termsOfService: ""
   contact:
-    name: "EKM Administration API"
+    name: "UKC Administration API"
 tags:
 - name: "General"
 - name: "Keys"
@@ -105,9 +105,6 @@ paths:
           description: "OK"
           schema:
             type: "string"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/info:
     get:
       tags:
@@ -129,9 +126,6 @@ paths:
           description: "OK"
           schema:
             $ref: "#/definitions/SystemInfo"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/keys:
     get:
       tags:
@@ -1220,9 +1214,6 @@ paths:
       responses:
         200:
           description: "OK"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/random:
     get:
       tags:
@@ -1761,9 +1752,6 @@ paths:
           description: "OK"
           schema:
             type: "file"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/server-ca.p7b:
     get:
       tags:
@@ -1781,9 +1769,6 @@ paths:
           description: "OK"
           schema:
             type: "file"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/trust:
     get:
       tags:
@@ -1804,9 +1789,6 @@ paths:
           description: "OK"
           schema:
             $ref: "#/definitions/SystemCertificate"
-      security:
-      - basicAuth: []
-      - Authorization: []
 securityDefinitions:
   Authorization:
     description: "For accessing the API a valid JWT token must be passed in all the\
@@ -2139,6 +2121,7 @@ definitions:
         - "CONCAT"
         - "HASH"
         - "BIP"
+        - "EDDSA"
       hash:
         type: "string"
         description: "Hash algorithm"
@@ -2371,6 +2354,10 @@ definitions:
       sync:
         type: "boolean"
         description: "This key is synchronized in within the UKC pair"
+        readOnly: true
+      requireApproval:
+        type: "boolean"
+        description: "This key is requires partner approval for sign operations"
         readOnly: true
       prev:
         type: "string"
@@ -2815,6 +2802,12 @@ definitions:
       doHash:
         type: "boolean"
         description: "do hash or not"
+      ecdsaMode:
+        type: "string"
+        description: "ecdsa sign mode"
+        enum:
+        - "ECDSA"
+        - "SCHNORR"
     description: "Input for sign operation"
   Signature:
     type: "object"
