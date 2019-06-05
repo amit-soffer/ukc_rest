@@ -66,12 +66,13 @@ info:
     \ for different jobs.\n\n\n## Common Errors\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error\n- 404 - Resource\
     \ not found. Verify that the url exists\n- 401 - Unauthorized"
-  version: "2.0.1902"
+  version: "2.0.1904"
   title: "UKC Admin API"
   termsOfService: ""
   contact: {}
 tags:
 - name: "Authentication"
+- name: "Backup"
 - name: "Clients"
 - name: "General"
 - name: "Jobs"
@@ -119,6 +120,105 @@ paths:
         401:
           description: "Authentication failure, the system could not verify the user\
             \ name and password passed in the request header"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/backup:
+    get:
+      tags:
+      - "Backup"
+      summary: "List all backups records"
+      description: ""
+      operationId: "listDbBackups"
+      parameters:
+      - name: "from"
+        in: "query"
+        description: "from"
+        required: false
+        type: "string"
+      - name: "to"
+        in: "query"
+        description: "to"
+        required: false
+        type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Limit"
+        required: false
+        type: "integer"
+        minimum: 1
+        format: "int32"
+      - name: "skip"
+        in: "query"
+        description: "skip"
+        required: false
+        type: "integer"
+        default: 0
+        minimum: 0
+        format: "int32"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/DbBackupListResponse"
+      security:
+      - basicAuth: []
+      - Authorization: []
+    post:
+      tags:
+      - "Backup"
+      summary: "Performs database backup"
+      description: ""
+      operationId: "backupDatabase"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "Backup request received"
+          schema:
+            $ref: "#/definitions/DbBackup"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/backup/{backupId}:
+    get:
+      tags:
+      - "Backup"
+      summary: "Get a backup recored in DB"
+      description: ""
+      operationId: "getDbBackup"
+      parameters:
+      - name: "backupId"
+        in: "path"
+        description: "Backup ID"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/DbBackup"
+      security:
+      - basicAuth: []
+      - Authorization: []
+    delete:
+      tags:
+      - "Backup"
+      summary: "Delete a backup recored in DB"
+      description: ""
+      operationId: "deleteDbBackup"
+      parameters:
+      - name: "backupId"
+        in: "path"
+        description: "Backup ID"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "OK"
       security:
       - basicAuth: []
       - Authorization: []
@@ -852,6 +952,12 @@ paths:
         description: "Detailed"
         required: false
         type: "boolean"
+      - name: "signed"
+        in: "query"
+        description: "Signed"
+        required: false
+        type: "boolean"
+        default: false
       responses:
         200:
           description: "OK"
@@ -1353,6 +1459,26 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/system/backup:
+    post:
+      tags:
+      - "System"
+      summary: "Performs database backup"
+      description: ""
+      operationId: "backupDatabase"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "Backup request received"
+          schema:
+            $ref: "#/definitions/OperationUid"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/system/certificates:
     get:
       tags:
@@ -1382,7 +1508,7 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get the servers and root ca certificates"
+      summary: "Get alerts associated with the servers and root ca certificates"
       description: ""
       operationId: "getSystemAlerts"
       consumes:
@@ -1450,6 +1576,31 @@ paths:
           description: "successful operation"
           schema:
             $ref: "#/definitions/SystemCertificate"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/system/keys/{keyId}:
+    get:
+      tags:
+      - "System"
+      summary: "Get a root CA signed key JWS"
+      description: ""
+      operationId: "getIntegrityKey"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "keyId"
+        in: "path"
+        description: "Key ID"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/JWS"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1931,11 +2082,17 @@ definitions:
       sha1Thumbprint:
         type: "string"
         description: "certificate sha1"
-      alertLevel:
+      subject:
         type: "string"
-        readOnly: true
-        enum:
-        - "WARN"
+      issuer:
+        type: "string"
+        description: "The CA that signed this certificate"
+      validFrom:
+        type: "string"
+        description: "Date of of validity period start for this certificate"
+      validUntil:
+        type: "string"
+        description: "Date of of validity period end for this certificate"
       version:
         type: "string"
         example: "V3"
@@ -1948,17 +2105,12 @@ definitions:
         type: "string"
         example: "sha256RSA"
         description: "Signing algorithm used for signing this certificate"
-      issuer:
-        type: "string"
-        description: "The CA that signed this certificate"
-      validFrom:
-        type: "string"
-        description: "Date of of validity period start for this certificate"
-      validUntil:
-        type: "string"
-        description: "Date of of validity period end for this certificate"
-      subject:
-        type: "string"
+      isCa:
+        type: "boolean"
+        description: "Determines if this certificate is a CA certificate"
+      isSelfSigned:
+        type: "boolean"
+        description: "Determines if this certificate is a self signed certificate"
       pkInfo:
         $ref: "#/definitions/PKInfoType"
       basicConstraints:
@@ -1982,12 +2134,11 @@ definitions:
       signature:
         type: "string"
         description: "CA signature value for this certificate"
-      isCa:
-        type: "boolean"
-        description: "Determines if this certificate is a CA certificate"
-      isSelfSigned:
-        type: "boolean"
-        description: "Determines if this certificate is a self signed certificate"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
     description: "Certificate public information"
   Client:
     type: "object"
@@ -2117,6 +2268,47 @@ definitions:
         type: "string"
         example: "0.0.0.0/0"
         description: "Client IP range"
+  DbBackup:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      state:
+        type: "string"
+        enum:
+        - "IN_PROGRESS"
+        - "PENDING_TEST"
+        - "TEST_SUCCESS"
+        - "TEST_FAILURE"
+        - "MANUAL_TEST"
+      date:
+        type: "string"
+      file:
+        type: "string"
+      serverName:
+        type: "string"
+      version:
+        type: "string"
+  DbBackupListResponse:
+    type: "object"
+    properties:
+      total:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      limit:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      skip:
+        type: "integer"
+        format: "int32"
+        readOnly: true
+      records:
+        type: "array"
+        readOnly: true
+        items:
+          $ref: "#/definitions/DbBackup"
   ECCBipKeyInfo:
     type: "object"
     properties:
@@ -2185,6 +2377,14 @@ definitions:
         type: "boolean"
         description: "Is Extension Critical"
     description: "Certificate x509 extension"
+  JWS:
+    type: "object"
+    properties:
+      value:
+        type: "string"
+        example: "eyJraWQiOiJpbnRlZ3JpdHkta2V5IiwiYWxnIjoiRVMyNTYifQ.eyJpZCI6InIxIiwidWlkIjoiMHgwMDY0MjczNWJmNDkyNDNiODciLCJvYmplY3RUeXBlIjoiUFJJVkFURV9LRVkiLCJrZXlGb3JtYXQiOnsidHlwZSI6IlJTQSIsInNpemUiOjIwNDh9LCJrZXlQcm9wZXJ0aWVzIjp7InRydXN0ZWQiOmZhbHNlLCJleHBvcnRUeXBlIjoiTk9OX0VYUE9SVEFCTEUiLCJncm91cHMiOlsiZGVmYXVsdCJdfSwibG9jYWwiOnRydWUsImhhc0NlcnRpZmljYXRlIjpmYWxzZSwic3RhdGUiOiJBQ1RJVkUiLCJzeW5jIjp0cnVlLCJyZXF1aXJlQXBwcm92YWwiOmZhbHNlLCJwa0luZm8iOnsicnNhIjp7InB1YmxpY0V4cG9uZW50IjoiNjU1MzciLCJtb2R1bHVzIjoiMDA6QkQ6MTA6MTc6ODI6QkM6M0U6Mjc6MDI6QUQ6RDI6Mjk6REI6ODQ6ODY6MTE6QjY6RDk6REM6MTA6QjU6M0I6QjU6QTM6NzA6OEY6MUU6QUE6Mzk6MkI6Njc6RTE6Nzk6NzM6RDc6QkU6OTA6RDY6REU6QjQ6REM6OUM6RjY6Nzc6MDg6MTA6RkQ6QzE6N0Y6Qzk6M0Y6RDQ6RTk6OTQ6MDM6NjM6Q0E6RDQ6NUI6NEE6MjE6QUU6Qzg6RjE6RkY6OTU6MzY6RDI6RDE6NzI6QUE6M0I6NEY6RUQ6MjA6MzI6RDk6NDc6QzM6NTk6NDI6MDk6NkI6RUU6Rjc6MjA6NUU6NTA6NjM6ODg6NkU6QzY6NzY6RjI6NjA6QUM6MTM6Mzc6MDE6NDM6NkU6Qzc6NDc6MjA6RTc6NjI6MzI6MjI6REQ6NDA6Qjk6MDk6MjI6M0U6RTc6QkY6NDU6MUM6NzY6OTg6QUM6Rjg6RTA6MjU6Qjg6RDY6NDQ6QTQ6RkM6N0I6Qjc6NkQ6RTc6REM6Q0I6OEM6NjU6MTA6RUM6QUE6RTU6Qzg6RUQ6Q0U6NzI6RUE6RDA6MjU6QjQ6OUQ6MkQ6QkI6REY6QjU6NUQ6QjQ6OTA6NUM6MDI6N0U6MEU6N0E6MjQ6QjM6Qzg6Qjg6RTc6QzM6RDg6NEU6ODI6OUE6NUQ6N0M6QkM6Mzk6MDg6MjA6Njg6NDc6NDc6Rjk6NDc6QkU6MzU6NkE6NUQ6NUQ6NkY6MUI6QTM6QjQ6MUY6QjU6Mjg6Njg6QjU6ODI6QkI6RDQ6NkI6RjQ6RTE6MzI6RDA6Qzg6M0I6MDU6QjA6MzE6RTA6NTQ6NEE6QjY6ODU6NkM6MUY6MkE6QkU6QjQ6MTQ6Q0M6NEE6Mjk6M0E6OEE6RTc6QUI6ODg6RDQ6RTg6OEY6QTE6NkI6RTQ6ODQ6N0Y6NUE6RjU6QzU6QjU6RUY6RDQ6REQ6Mjg6Njc6MjE6Qzg6QkU6OUY6Mzk6QzE6MTQ6Mzk6Q0Y6RDA6REIifX0sImNyZWF0ZWRBdCI6IjIwMTktMDMtMTFUMDg6MzM6NDdaIiwidXBkYXRlZEF0IjoiMjAxOS0wMy0xMVQwODozMzo0OFoifQ.OMsru0JgLra358guXW8jMgCgArlkHdeR0m2rbFLl4yIKLNjxt4TUv3q2IpdUKgeOvWsexBb3VT1TZQ7ON6Y3pA"
+        description: "value"
+        readOnly: true
   Job:
     type: "object"
     properties:
@@ -2425,6 +2625,14 @@ definitions:
         type: "boolean"
         example: false
         description: " Support certificate propagation"
+      fipsRequirements:
+        type: "string"
+        example: "FIPS_NONE"
+        description: "The Partition FIPS Requirements"
+        enum:
+        - "FIPS_ONLY"
+        - "FIPS_PREFERRED"
+        - "FIPS_NONE"
     description: "A UKC Partition"
   NewRole:
     type: "object"
@@ -2501,6 +2709,17 @@ definitions:
         - "STANDARD"
         - "LDAP"
     description: "A UKC new user"
+  OperationUid:
+    type: "object"
+    required:
+    - "value"
+    properties:
+      value:
+        type: "string"
+        example: "0x0123fa"
+        description: "Operation UID"
+        minLength: 1
+    description: "OperationUid"
   PKInfoType:
     type: "object"
     properties:
@@ -2594,6 +2813,14 @@ definitions:
         format: "int32"
         description: "user retries limit"
         readOnly: true
+      fipsRequirements:
+        type: "string"
+        example: "FIPS_NONE"
+        description: "The Partition FIPS Requirements"
+        enum:
+        - "FIPS_ONLY"
+        - "FIPS_PREFERRED"
+        - "FIPS_NONE"
       jWTExpiration:
         type: "integer"
         format: "int32"
@@ -2710,7 +2937,7 @@ definitions:
         readOnly: true
         items:
           $ref: "#/definitions/RolePermission"
-    description: "An ekm role"
+    description: "A UKC role"
   RoleListResponse:
     type: "object"
     properties:
@@ -2997,7 +3224,32 @@ definitions:
         readOnly: true
         items:
           $ref: "#/definitions/Server"
+      triplets:
+        type: "array"
+        description: "Triplets"
+        readOnly: true
+        items:
+          $ref: "#/definitions/Triplet"
     description: "A UKC server topology"
+  Triplet:
+    type: "object"
+    properties:
+      entryPoint:
+        type: "string"
+        description: "Entry Point name"
+        readOnly: true
+      partner:
+        type: "string"
+        description: "Partner name"
+        readOnly: true
+      auxiliary:
+        type: "string"
+        description: "Auxiliary name"
+        readOnly: true
+      connected:
+        type: "boolean"
+        description: "Is Triplet connected "
+        readOnly: true
   UpdatedRole:
     type: "object"
     properties:
