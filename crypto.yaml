@@ -66,7 +66,7 @@ info:
     \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
     \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
-  version: "2.0.1902"
+  version: "2.0.1904"
   title: "Unbound Key Control Server"
   termsOfService: ""
   contact:
@@ -434,6 +434,12 @@ paths:
         required: false
         type: "boolean"
         default: true
+      - name: "signed"
+        in: "query"
+        description: "Signed"
+        required: false
+        type: "boolean"
+        default: false
       responses:
         200:
           description: "OK"
@@ -1979,11 +1985,17 @@ definitions:
       sha1Thumbprint:
         type: "string"
         description: "certificate sha1"
-      alertLevel:
+      subject:
         type: "string"
-        readOnly: true
-        enum:
-        - "WARN"
+      issuer:
+        type: "string"
+        description: "The CA that signed this certificate"
+      validFrom:
+        type: "string"
+        description: "Date of of validity period start for this certificate"
+      validUntil:
+        type: "string"
+        description: "Date of of validity period end for this certificate"
       version:
         type: "string"
         example: "V3"
@@ -1996,17 +2008,12 @@ definitions:
         type: "string"
         example: "sha256RSA"
         description: "Signing algorithm used for signing this certificate"
-      issuer:
-        type: "string"
-        description: "The CA that signed this certificate"
-      validFrom:
-        type: "string"
-        description: "Date of of validity period start for this certificate"
-      validUntil:
-        type: "string"
-        description: "Date of of validity period end for this certificate"
-      subject:
-        type: "string"
+      isCa:
+        type: "boolean"
+        description: "Determines if this certificate is a CA certificate"
+      isSelfSigned:
+        type: "boolean"
+        description: "Determines if this certificate is a self signed certificate"
       pkInfo:
         $ref: "#/definitions/PKInfoType"
       basicConstraints:
@@ -2030,12 +2037,11 @@ definitions:
       signature:
         type: "string"
         description: "CA signature value for this certificate"
-      isCa:
-        type: "boolean"
-        description: "Determines if this certificate is a CA certificate"
-      isSelfSigned:
-        type: "boolean"
-        description: "Determines if this certificate is a self signed certificate"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
     description: "Certificate public information"
   Cipher:
     type: "object"
@@ -2354,6 +2360,10 @@ definitions:
       sync:
         type: "boolean"
         description: "This key is synchronized in within the UKC pair"
+        readOnly: true
+      isFips:
+        type: "boolean"
+        description: "This key created in FIPS mode"
         readOnly: true
       requireApproval:
         type: "boolean"
