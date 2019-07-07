@@ -66,7 +66,7 @@ info:
     \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
     \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
-  version: "2.0.1904"
+  version: "2.0.1905"
   title: "Unbound Key Control Server"
   termsOfService: ""
   contact:
@@ -1835,6 +1835,7 @@ definitions:
         - "OUT_OF_SYNC"
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
+        - "DB_BACKUP_INCONSISTENT"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1852,6 +1853,7 @@ definitions:
         enum:
         - "CLIENTS"
         - "SYSTEM"
+        - "BACKUP"
         - "KEYS"
       alertType:
         type: "string"
@@ -1862,6 +1864,7 @@ definitions:
         - "OUT_OF_SYNC"
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
+        - "DB_BACKUP_INCONSISTENT"
       alertLevel:
         type: "string"
         readOnly: true
