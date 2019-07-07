@@ -66,7 +66,7 @@ info:
     \ for different jobs.\n\n\n## Common Errors\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error\n- 404 - Resource\
     \ not found. Verify that the url exists\n- 401 - Unauthorized"
-  version: "2.0.1904"
+  version: "2.0.1905"
   title: "UKC Admin API"
   termsOfService: ""
   contact: {}
@@ -127,7 +127,7 @@ paths:
     get:
       tags:
       - "Backup"
-      summary: "List all backups records"
+      summary: "List all backup records"
       description: ""
       operationId: "listDbBackups"
       parameters:
@@ -183,11 +183,29 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/backup/alerts:
+    get:
+      tags:
+      - "Backup"
+      summary: "Get backup alerts summary"
+      description: ""
+      operationId: "getBackupAlertsSummary"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/AlertsSummary"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/backup/{backupId}:
     get:
       tags:
       - "Backup"
-      summary: "Get a backup recored in DB"
+      summary: "Get a DB backup information"
       description: ""
       operationId: "getDbBackup"
       parameters:
@@ -219,6 +237,29 @@ paths:
       responses:
         200:
           description: "OK"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/backup/{backupId}/alerts:
+    get:
+      tags:
+      - "Backup"
+      summary: "Get alerts of a backup"
+      description: "Returns alert if backup digest test fails"
+      operationId: "getBackupAlerts"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "backupId"
+        in: "path"
+        description: "Backup ID"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Alert"
       security:
       - basicAuth: []
       - Authorization: []
@@ -743,7 +784,7 @@ paths:
   /api/v1/me/password:
     put:
       tags:
-      - "Authentication"
+      - "Users"
       summary: "Change the password of the current user"
       description: "The current user credentials are provided in the HTTP headers.\
         \ Could be either password or JWT token"
@@ -1459,26 +1500,6 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
-  /api/v1/system/backup:
-    post:
-      tags:
-      - "System"
-      summary: "Performs database backup"
-      description: ""
-      operationId: "backupDatabase"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      parameters: []
-      responses:
-        200:
-          description: "Backup request received"
-          schema:
-            $ref: "#/definitions/OperationUid"
-      security:
-      - basicAuth: []
-      - Authorization: []
   /api/v1/system/certificates:
     get:
       tags:
@@ -1959,6 +1980,7 @@ definitions:
         - "OUT_OF_SYNC"
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
+        - "DB_BACKUP_INCONSISTENT"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1976,6 +1998,7 @@ definitions:
         enum:
         - "CLIENTS"
         - "SYSTEM"
+        - "BACKUP"
         - "KEYS"
       alertType:
         type: "string"
@@ -1986,6 +2009,7 @@ definitions:
         - "OUT_OF_SYNC"
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
+        - "DB_BACKUP_INCONSISTENT"
       alertLevel:
         type: "string"
         readOnly: true
@@ -2281,6 +2305,8 @@ definitions:
         - "TEST_SUCCESS"
         - "TEST_FAILURE"
         - "MANUAL_TEST"
+        - "GENERAL_FAILURE"
+        - "INVALID"
       date:
         type: "string"
       file:
@@ -2289,6 +2315,13 @@ definitions:
         type: "string"
       version:
         type: "string"
+      digestDiff:
+        type: "string"
+      alertLevel:
+        type: "string"
+        readOnly: true
+        enum:
+        - "WARN"
   DbBackupListResponse:
     type: "object"
     properties:
@@ -2709,17 +2742,6 @@ definitions:
         - "STANDARD"
         - "LDAP"
     description: "A UKC new user"
-  OperationUid:
-    type: "object"
-    required:
-    - "value"
-    properties:
-      value:
-        type: "string"
-        example: "0x0123fa"
-        description: "Operation UID"
-        minLength: 1
-    description: "OperationUid"
   PKInfoType:
     type: "object"
     properties:
@@ -2937,7 +2959,7 @@ definitions:
         readOnly: true
         items:
           $ref: "#/definitions/RolePermission"
-    description: "A UKC role"
+    description: "An ekm role"
   RoleListResponse:
     type: "object"
     properties:
