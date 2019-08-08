@@ -13,6 +13,9 @@ info:
     \ authenticate the user with a generated authentication token,\nwhich is valid\
     \ for a limited time. This token eliminates the need to\ntransmit the  username/password\
     \ on every request. See `GET /authToken` for\nmore information.\n\n### Authentication\
+    \ with a Certificate\n\nThe client can authenticate with the UKC using a client\
+    \ certificate. This method can be useful to either add another layer of security\
+    \ or when you do not desire to use a username and password.\n\n### Authentication\
     \ Failure (unauthorized)\n\nIf an operation is unauthorized, an HTTP 401 status\
     \ code is returned with\nthe `WWW-Authenticate` header.\n\n## Partitioning\n\n\
     UKC objects are organized into partitions. Partitioning allows namespacing\nand\
@@ -66,11 +69,12 @@ info:
     \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
     \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
-  version: "2.0.1905"
+  version: "2.0.1906"
   title: "Unbound Key Control Server"
-  termsOfService: ""
   contact:
-    name: "UKC Administration API"
+    name: "Contact"
+    url: "https://www.unboundtech.com"
+    email: "support@unboundtech.com"
 tags:
 - name: "General"
 - name: "Keys"
@@ -82,9 +86,9 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Check if the UKC server is alive and functioning properly"
-      description: "Return health status of the system and determine if it is usable.\
-        \ As long as the HTTP return code is OK, the system is usable."
+      summary: "Check UKC health"
+      description: "Return health status of the UKC system and determine if it is\
+        \ usable. As long as the HTTP return code is OK, the system is usable."
       operationId: "getHealth"
       parameters:
       - name: "pairOnly"
@@ -110,8 +114,8 @@ paths:
       tags:
       - "General"
       summary: "Return system information"
-      description: "Including version and supported capabilities. If authentication\
-        \ is provided, returns the allowed operations."
+      description: "Return system information, including version and supported capabilities.\
+        \ If authentication is provided, it returns the allowed operations."
       operationId: "getSystemInfo"
       produces:
       - "application/json"
@@ -130,8 +134,8 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "List key objects"
-      description: "Return a list of keys"
+      summary: "List keys"
+      description: "Return a list of keys."
       operationId: "listKeys"
       produces:
       - "application/json"
@@ -221,8 +225,8 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Import a new asymmetric key"
-      description: "Import a new key based on the given file"
+      summary: "Import asymmetric key"
+      description: "Import a new asymmetric key based on the given file."
       operationId: "importKey"
       consumes:
       - "multipart/form-data"
@@ -298,8 +302,8 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get keys alerts summary"
-      description: ""
+      summary: "Get key alerts"
+      description: "Get a summary of key alerts."
       operationId: "getAlertsSummary"
       produces:
       - "application/json"
@@ -321,8 +325,8 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Generate new asymmetric key, key format is provided as a parameter"
-      description: "Generate a new key based on provided parameters"
+      summary: "Generate asymmetric key"
+      description: "Generate new asymmetric key, key format is provided as a parameter."
       operationId: "generateKey"
       consumes:
       - "application/json"
@@ -356,8 +360,8 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get keys groups"
-      description: ""
+      summary: "Get key groups"
+      description: "Get key groups."
       operationId: "getKeysGroups"
       produces:
       - "application/json"
@@ -412,8 +416,8 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get key detailed key information"
-      description: ""
+      summary: "Get detailed key info"
+      description: "Get detailed key information."
       operationId: "getKey"
       produces:
       - "application/json"
@@ -451,8 +455,8 @@ paths:
     put:
       tags:
       - "Keys"
-      summary: "Updating existing key"
-      description: ""
+      summary: "Update key"
+      description: "Update an existing key."
       operationId: "updateKey"
       consumes:
       - "application/json"
@@ -486,8 +490,8 @@ paths:
     delete:
       tags:
       - "Keys"
-      summary: "Delete a key"
-      description: "Delete provided key"
+      summary: "Delete key"
+      description: "Delete the specified key."
       operationId: "deleteKey"
       produces:
       - "application/json"
@@ -512,8 +516,8 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get details of an existing client"
-      description: "Return details of a client"
+      summary: "Get client details"
+      description: "Get details of an existing client."
       operationId: "getKeyAlerts"
       produces:
       - "application/json"
@@ -540,11 +544,11 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Decrypt a value using a key"
-      description: "Decryption is done using the key. Same parameters for encryption\
-        \ are supported, as well as both simple and unseal mode, in case of symmetric\
-        \ key, only simple mode is supported. If decryption fails with latest key\
-        \ version the previous version (if such exist) will be used, etc."
+      summary: "Decrypt a value"
+      description: "Decrypt a value using the key. The same parameters for encryption\
+        \ are supported for decryption, as well as both simple and unseal mode. For\
+        \ a symmetric key, only simple mode is supported. If decryption fails with\
+        \ the latest key version, the previous version (if it exists) is used, etc."
       operationId: "decryptWithKey"
       consumes:
       - "application/json"
@@ -581,11 +585,11 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Decrypt multiple values using a key"
-      description: "Decryption is done using the key. Same parameters for encryption\
-        \ are supported, as well as both simple and unseal mode, in case of symmetric\
-        \ key, only simple mode is supported. If decryption fails with latest key\
-        \ version the previous version (if such exist) will be used, etc."
+      summary: "Decrypt multiple values"
+      description: "Decryption is done using the key. The same parameters for encryption\
+        \ are supported for decryption, as well as both simple and unseal mode. For\
+        \ a symmetric key, only simple mode is supported. If decryption fails with\
+        \ the latest key version, the previous version (if it exists) is used, etc."
       operationId: "multiDecryptWithKey"
       consumes:
       - "application/json"
@@ -624,8 +628,8 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Unwrap and import a new key"
-      description: ""
+      summary: "Unwrap and import new key"
+      description: "Unwrap and import a new key."
       operationId: "derive"
       consumes:
       - "application/json"
@@ -664,11 +668,11 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Encrypt clear text into cipher text with an existing key"
-      description: "Encryption is done using the key. Parameters allow selecting padding\
-        \ mode and encryption mode. If key type is asymmetric encryption is done exactly\
-        \ as encryption with a certificate, if key type is symmetric only simple mode\
-        \ is supported."
+      summary: "Encrypt clear text"
+      description: "Encrypt clear text into cipher text with an existing key. Parameters\
+        \ allow selecting padding mode and encryption mode. If key type is asymmetric,\
+        \ encryption is done exactly as encryption with a certificate. If key type\
+        \ is symmetric, only simple mode is supported."
       operationId: "encryptWithKey"
       consumes:
       - "application/json"
@@ -703,11 +707,11 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Encrypt multiple values with an existing key"
+      summary: "Encrypt multiple values"
       description: "Encryption is done using the key. Parameters allow selecting padding\
-        \ mode and encryption mode. If key type is asymmetric encryption is done exactly\
-        \ as encryption with a certificate, if key type is symmetric only simple mode\
-        \ is supported."
+        \ mode and encryption mode. If key type is asymmetric, encryption is done\
+        \ exactly as encryption with a certificate. If key type is symmetric, only\
+        \ simple mode is supported."
       operationId: "multiEncryptWithKey"
       consumes:
       - "application/json"
@@ -744,9 +748,9 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Creates a Message Authentication Code (MAC) for a message using a\
-        \ key"
-      description: "Generate MAC for a message. MAC mode is provided as a parameter."
+      summary: "Create MAC for a message"
+      description: "Generate a Message Authentication Code (MAC) for a message. MAC\
+        \ mode is provided as a parameter."
       operationId: "createMacWithKey"
       consumes:
       - "application/json"
@@ -781,7 +785,7 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Verify a Message Authentication Code (MAC) using a key"
+      summary: "Verify MAC"
       description: "Verifies a MAC value. Supports the same parameters as the MAC\
         \ option."
       operationId: "verifyMacWithKey"
@@ -818,8 +822,8 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Return specific allowed operations for a specific key UID."
-      description: "return specific allowed operations for a specific key UID."
+      summary: "Get operations per UID"
+      description: "Return specific allowed operations for a specific key UID."
       operationId: "getKeyPermissions"
       produces:
       - "application/json"
@@ -871,9 +875,9 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get key public data"
+      summary: "Get public key data"
       description: "Return the public details of an asymmetric key or exportable symmetric\
-        \ key"
+        \ key."
       operationId: "getPublicKeyData"
       produces:
       - "application/json"
@@ -907,8 +911,7 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Renew an existing key. A link is created between the old key and the\
-        \ new one."
+      summary: "Renew a key"
       description: "Create a new key with the same parameters as the existing one.\
         \ The new key inherits the current key ID and a link is created between the\
         \ two keys."
@@ -942,11 +945,11 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Encrypt clear text into cipher text with an existing key"
-      description: "Encryption is done using the key. Parameters allow selecting padding\
-        \ mode and encryption mode. If key type is asymmetric encryption is done exactly\
-        \ as encryption with a certificate, if key type is symmetric only simple mode\
-        \ is supported."
+      summary: "Seal clear text"
+      description: "Seal clear text into cipher text with an existing key. Parameters\
+        \ allow selecting padding mode and encryption mode. If key type is asymmetric,\
+        \ encryption is done exactly as encryption with a certificate. If key type\
+        \ is symmetric, only simple mode is supported."
       operationId: "sealWithKey"
       consumes:
       - "application/json"
@@ -981,10 +984,11 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Sign a message using a key"
-      description: "Hash and sign a given message. If requested can also assume the\
-        \ input is a hash value and just sign it. Different modes are supported as\
-        \ parameters and output can be either raw signature or PKCS7, based on request."
+      summary: "Sign a message"
+      description: "Hash and sign a given message. If requested, it can also assume\
+        \ the input is a hash value and just sign it. Different modes are supported\
+        \ as parameters and the output can be either a raw signature or PKCS7, based\
+        \ on request."
       operationId: "signWithKey"
       consumes:
       - "application/json"
@@ -1019,11 +1023,11 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Decrypt a value using a key"
-      description: "Decryption is done using the key. Same parameters for encryption\
-        \ are supported, as well as both simple and unseal mode, in case of symmetric\
-        \ key, only simple mode is supported. If decryption fails with latest key\
-        \ version the previous version (if such exist) will be used, etc."
+      summary: "Unseal a value"
+      description: "Unseal a value using the key. The same parameters for encryption\
+        \ are supported for decryption, as well as both simple and unseal mode. For\
+        \ a symmetric key, only simple mode is supported. If decryption fails with\
+        \ the latest key version, the previous version (if it exists) is used, etc."
       operationId: "unSealWithKey"
       consumes:
       - "application/json"
@@ -1060,8 +1064,8 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Unwrap and import a new key"
-      description: ""
+      summary: "Unwrap and import key"
+      description: "Unwrap and import a new key."
       operationId: "unwrap"
       consumes:
       - "application/json"
@@ -1100,7 +1104,7 @@ paths:
       - "Keys"
       summary: "Get key data"
       description: "Return the public details of an asymmetric key or exportable symmetric\
-        \ key"
+        \ key."
       operationId: "getKeyData"
       produces:
       - "application/json"
@@ -1133,9 +1137,9 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Verify a signature using a key"
+      summary: "Verify a signature"
       description: "Verifies a signature value. Supports the same parameters as the\
-        \ signing option."
+        \ sign option."
       operationId: "verifyWithKey"
       consumes:
       - "application/json"
@@ -1170,8 +1174,8 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Wrap and export a key with an existing key"
-      description: ""
+      summary: "Wrap and export key"
+      description: "Wrap and export a key with an existing key."
       operationId: "wrap"
       consumes:
       - "application/json"
@@ -1206,8 +1210,8 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Check if the UKC pair is alive and functioning properly"
-      description: "Return health status of the pair and determine if it is usable"
+      summary: "Check pair health"
+      description: "Return health status of the UKC pair and determine if it is usable"
       operationId: "getPairHealth"
       parameters:
       - name: "timeout"
@@ -1224,10 +1228,10 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Return random bytes from the UKC server. By default it returns 32\
-        \ bytes, unless size is specified."
-      description: "The UKC random number generator is combined from different entropy\
-        \ sources of the different servers in the UKC cluster"
+      summary: "Generate random bytes"
+      description: "Get random bytes from the UKC server. By default it returns 32\
+        \ bytes, unless size is specified. The UKC random number generator is combined\
+        \ from different entropy sources of the different servers in the UKC cluster"
       operationId: "generateRandom"
       produces:
       - "application/json"
@@ -1253,11 +1257,12 @@ paths:
     put:
       tags:
       - "General"
-      summary: "Add random bytes to the UKC entropy source"
-      description: "Different clients can add entropy to the server. Collecting entropy\
-        \ from the clients can enhance the strength of the UKC random number generator.\
-        \ This function only adds entropy, i.e. if the provided value has no entropy,\
-        \ it does not harm the generator quality"
+      summary: "Add entropy bytes"
+      description: "Add random bytes to the UKC entropy source. Different clients\
+        \ can add entropy to the server. Collecting entropy from the clients can enhance\
+        \ the strength of the UKC random number generator. This function only adds\
+        \ entropy, i.e. if the provided value has no entropy, it does not harm the\
+        \ generator quality."
       operationId: "addRandomEntropyBytes"
       consumes:
       - "application/json"
@@ -1744,9 +1749,9 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Return specific server certificate"
+      summary: "Get server certificate"
       description: "Download this specific server certificate. It is used for registering\
-        \ new servers"
+        \ new servers."
       operationId: "selfCertGet"
       produces:
       - "application/x-x509-user-cert,application/json"
@@ -1762,8 +1767,8 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Return UKC root CA certificate"
-      description: "Download the root CA certificate of UKC"
+      summary: "Get root certificate"
+      description: "Download the root CA certificate of UKC."
       operationId: "getCaCert"
       produces:
       - "application/x-pkcs7-certificates,application/json"
@@ -1779,8 +1784,8 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Get all trusted certificates"
-      description: ""
+      summary: "Get trusted certificates"
+      description: "Get all trusted certificates."
       operationId: "getTrust"
       produces:
       - "application/json"
@@ -1836,6 +1841,8 @@ definitions:
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
         - "DB_BACKUP_INCONSISTENT"
+        - "SECRET_ABOUT_TO_EXPIRE"
+        - "SECRET_EXPIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1853,8 +1860,8 @@ definitions:
         enum:
         - "CLIENTS"
         - "SYSTEM"
-        - "BACKUP"
         - "KEYS"
+        - "BACKUP"
       alertType:
         type: "string"
         readOnly: true
@@ -1865,6 +1872,8 @@ definitions:
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
         - "DB_BACKUP_INCONSISTENT"
+        - "SECRET_ABOUT_TO_EXPIRE"
+        - "SECRET_EXPIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -3016,8 +3025,10 @@ definitions:
     type: "object"
     required:
     - "keyData"
-    - "wrappedKey"
+    - "newGeneratedKey"
     properties:
+      newGeneratedKey:
+        $ref: "#/definitions/NewGeneratedKey"
       aSymmetricParams:
         description: "Asymmetric cryptographic parameters for symmetric keys"
         $ref: "#/definitions/AsymmetricCryptoParams"
@@ -3028,12 +3039,6 @@ definitions:
         type: "string"
         description: "optional key data to import"
         minLength: 1
-      wrappedKey:
-        type: "string"
-        description: "the encrypted wrapped key"
-        minLength: 1
-      keyProperties:
-        $ref: "#/definitions/KeyProperties"
     description: "Input for unwrap operation"
   UpdatedSecret:
     type: "object"
