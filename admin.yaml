@@ -13,6 +13,9 @@ info:
     \ authenticate the user with a generated authentication token,\nwhich is valid\
     \ for a limited time. This token eliminates the need to\ntransmit the  username/password\
     \ on every request. See `GET /authToken` for\nmore information.\n\n### Authentication\
+    \ with a Certificate\n\nThe client can authenticate with the UKC using a client\
+    \ certificate. This method can be useful to either add another layer of security\
+    \ or when you do not desire to use a username and password.\n\n### Authentication\
     \ Failure (unauthorized)\n\nIf an operation is unauthorized, an HTTP 401 status\
     \ code is returned with\nthe `WWW-Authenticate` header.\n\n## Partitioning\n\n\
     UKC objects are organized into partitions. Partitioning allows namespacing\nand\
@@ -66,10 +69,12 @@ info:
     \ for different jobs.\n\n\n## Common Errors\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error\n- 404 - Resource\
     \ not found. Verify that the url exists\n- 401 - Unauthorized"
-  version: "2.0.1905"
+  version: "2.0.1906"
   title: "UKC Admin API"
-  termsOfService: ""
-  contact: {}
+  contact:
+    name: "Contact"
+    url: "https://www.unboundtech.com"
+    email: "support@unboundtech.com"
 tags:
 - name: "Authentication"
 - name: "Backup"
@@ -87,9 +92,9 @@ paths:
     get:
       tags:
       - "Authentication"
-      summary: "Returns an authentication token which can be used in future calls\
-        \ for authentication"
-      description: "The user credentials are provided in the HTTP headers"
+      summary: "Get token"
+      description: "Returns an authentication token which can be used in future calls\
+        \ for authentication.\nThe user credentials are provided in the HTTP headers"
       operationId: "getAuthToken"
       produces:
       - "application/json"
@@ -108,8 +113,8 @@ paths:
     delete:
       tags:
       - "Authentication"
-      summary: "Invalidates an authentication token"
-      description: ""
+      summary: "Revoke token"
+      description: "Invalidates an authentication token"
       operationId: "invalidateAuthToken"
       produces:
       - "application/json"
@@ -127,8 +132,8 @@ paths:
     get:
       tags:
       - "Backup"
-      summary: "List all backup records"
-      description: ""
+      summary: "List backups"
+      description: "List all backup records"
       operationId: "listDbBackups"
       parameters:
       - name: "from"
@@ -167,8 +172,8 @@ paths:
     post:
       tags:
       - "Backup"
-      summary: "Performs database backup"
-      description: ""
+      summary: "Backup database"
+      description: "Perform a database backup"
       operationId: "backupDatabase"
       consumes:
       - "application/json"
@@ -188,7 +193,7 @@ paths:
       tags:
       - "Backup"
       summary: "Get backup alerts summary"
-      description: ""
+      description: "Get backup alerts summary"
       operationId: "getBackupAlertsSummary"
       produces:
       - "application/json"
@@ -205,8 +210,8 @@ paths:
     get:
       tags:
       - "Backup"
-      summary: "Get a DB backup information"
-      description: ""
+      summary: "Get database backup info"
+      description: "Get database backup information"
       operationId: "getDbBackup"
       parameters:
       - name: "backupId"
@@ -225,8 +230,8 @@ paths:
     delete:
       tags:
       - "Backup"
-      summary: "Delete a backup recored in DB"
-      description: ""
+      summary: "Delete backup record"
+      description: "Delete a backup record in the database."
       operationId: "deleteDbBackup"
       parameters:
       - name: "backupId"
@@ -244,8 +249,9 @@ paths:
     get:
       tags:
       - "Backup"
-      summary: "Get alerts of a backup"
-      description: "Returns alert if backup digest test fails"
+      summary: "Get alerts from backup"
+      description: "Get alerts from a backup. Returns an alert if backup digest test\
+        \ fails."
       operationId: "getBackupAlerts"
       produces:
       - "application/json"
@@ -268,7 +274,7 @@ paths:
       tags:
       - "Clients"
       summary: "List clients"
-      description: "Return a list of clients"
+      description: "Return a list of clients."
       operationId: "listClients"
       produces:
       - "application/json"
@@ -311,8 +317,8 @@ paths:
     post:
       tags:
       - "Clients"
-      summary: "Creates a new client and returns its activation code"
-      description: ""
+      summary: "Create a client"
+      description: "Creates a new client and returns the activation code."
       operationId: "createClient"
       consumes:
       - "application/json"
@@ -352,8 +358,8 @@ paths:
     get:
       tags:
       - "Clients"
-      summary: "Get clients alerts summary"
-      description: ""
+      summary: "Get alert summary"
+      description: "Get a summary of the client alerts."
       operationId: "getAlertsSummary"
       produces:
       - "application/json"
@@ -375,8 +381,8 @@ paths:
     post:
       tags:
       - "Clients"
-      summary: "Creates a new client and returns it's certificate"
-      description: ""
+      summary: "Create a client with certificate"
+      description: "Creates a new client and returns the certificate."
       operationId: "createClientWithCertificate"
       consumes:
       - "application/json"
@@ -411,12 +417,49 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/clients/with-secret:
+    post:
+      tags:
+      - "Clients"
+      summary: "Create a client with secret"
+      description: "Creates a new client and returns the secret."
+      operationId: "createClientWithSecret"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "New Client"
+        required: false
+        schema:
+          $ref: "#/definitions/NewClientWithSecret"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Client"
+        201:
+          description: "New client created successfully"
+        202:
+          description: "ACCEPTED"
+        409:
+          description: "Object already exists"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/clients/{clientId}:
     get:
       tags:
       - "Clients"
-      summary: "Get details of an existing client"
-      description: "Return details of a client"
+      summary: "Get client details"
+      description: "Return details of a client."
       operationId: "getClient"
       produces:
       - "application/json"
@@ -447,8 +490,8 @@ paths:
     put:
       tags:
       - "Clients"
-      summary: "Update Client Properties"
-      description: "Update Client Properties"
+      summary: "Update client properties"
+      description: "Update client properties."
       operationId: "updateClient"
       produces:
       - "application/json"
@@ -484,8 +527,8 @@ paths:
     delete:
       tags:
       - "Clients"
-      summary: "Deletes a client"
-      description: "Delete provided client"
+      summary: "Delete a client"
+      description: "Delete the specified client."
       operationId: "deleteClient"
       produces:
       - "application/json"
@@ -514,8 +557,8 @@ paths:
     put:
       tags:
       - "Clients"
-      summary: "Refresh Client Activation Code"
-      description: "Refresh Client Activation Code"
+      summary: "Refresh activation code"
+      description: "Refresh the client's activation code."
       operationId: "refreshClientActivationCode"
       produces:
       - "application/json"
@@ -530,7 +573,7 @@ paths:
         description: "Refreshed values"
         required: false
         schema:
-          $ref: "#/definitions/RefreshedClient"
+          $ref: "#/definitions/RefreshedCertificateClient"
       - name: "partitionId"
         in: "query"
         description: "Partition ID"
@@ -552,8 +595,8 @@ paths:
     get:
       tags:
       - "Clients"
-      summary: "Get details of an existing client"
-      description: "Return details of a client"
+      summary: "Get client alerts"
+      description: "Return the alerts for a specific client."
       operationId: "getClientAlerts"
       produces:
       - "application/json"
@@ -576,13 +619,89 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/clients/{clientId}/publicKey:
+    put:
+      tags:
+      - "Clients"
+      summary: "Refresh client public key"
+      description: "Refresh client public key."
+      operationId: "refreshClientPublicKey"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "clientId"
+        in: "path"
+        description: "Client ID"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Refreshed values"
+        required: false
+        schema:
+          $ref: "#/definitions/RefreshedPublicKeyClient"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "Secret Refreshed successfully."
+          schema:
+            $ref: "#/definitions/Client"
+        202:
+          description: "ACCEPTED"
+          schema:
+            $ref: "#/definitions/Job"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/clients/{clientId}/secret:
+    put:
+      tags:
+      - "Clients"
+      summary: "Refresh client secret"
+      description: "Refresh client secret"
+      operationId: "refreshClientSecret"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "clientId"
+        in: "path"
+        description: "Client ID"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Refreshed values"
+        required: false
+        schema:
+          $ref: "#/definitions/RefreshedSecretClient"
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "Secret Refreshed successfully."
+          schema:
+            $ref: "#/definitions/Client"
+        202:
+          description: "ACCEPTED"
+          schema:
+            $ref: "#/definitions/Job"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/health:
     get:
       tags:
       - "General"
-      summary: "Check if the UKC server is alive and functioning properly"
-      description: "Return health status of the system and determine if it is usable.\
-        \ As long as the HTTP return code is OK, the system is usable."
+      summary: "Check UKC health"
+      description: "Return health status of the UKC system and determine if it is\
+        \ usable. As long as the HTTP return code is OK, the system is usable."
       operationId: "getHealth"
       parameters:
       - name: "pairOnly"
@@ -608,8 +727,8 @@ paths:
       tags:
       - "General"
       summary: "Return system information"
-      description: "Including version and supported capabilities. If authentication\
-        \ is provided, returns the allowed operations."
+      description: "Return system information, including version and supported capabilities.\
+        \ If authentication is provided, it returns the allowed operations."
       operationId: "getSystemInfo"
       produces:
       - "application/json"
@@ -628,8 +747,8 @@ paths:
     get:
       tags:
       - "Jobs"
-      summary: "Get status of pending quorum requests"
-      description: ""
+      summary: "Get job status"
+      description: "Get the status of pending quorum requests."
       operationId: "getQuorumStatus"
       produces:
       - "application/json"
@@ -651,8 +770,8 @@ paths:
     get:
       tags:
       - "Jobs"
-      summary: "Get a list of pending quorum jobs"
-      description: ""
+      summary: "List pending jobs"
+      description: "Get a list of the pending quorum jobs."
       operationId: "getQuorumJobs"
       produces:
       - "application/json"
@@ -677,7 +796,7 @@ paths:
       tags:
       - "Jobs"
       summary: "Get job data"
-      description: ""
+      description: "Get job data for a specific job."
       operationId: "getQuorumJob"
       produces:
       - "application/json"
@@ -704,7 +823,7 @@ paths:
       tags:
       - "Jobs"
       summary: "Delete a job"
-      description: ""
+      description: "Delete a specific job."
       operationId: "deleteQuorumJob"
       parameters:
       - name: "jobId"
@@ -729,8 +848,8 @@ paths:
     post:
       tags:
       - "Jobs"
-      summary: "Approve a pending quorum job"
-      description: ""
+      summary: "Approve a job"
+      description: "Approve a pending quorum job."
       operationId: "approveJob"
       produces:
       - "application/json"
@@ -757,8 +876,8 @@ paths:
     post:
       tags:
       - "Jobs"
-      summary: "Execute an approved quorum job"
-      description: ""
+      summary: "Execute a job"
+      description: "Execute an approved quorum job."
       operationId: "executeJob"
       produces:
       - "application/json"
@@ -784,10 +903,10 @@ paths:
   /api/v1/me/password:
     put:
       tags:
-      - "Users"
-      summary: "Change the password of the current user"
-      description: "The current user credentials are provided in the HTTP headers.\
-        \ Could be either password or JWT token"
+      - "Authentication"
+      summary: "Change password"
+      description: "Change the password for the current user. The current user credentials\
+        \ are provided in the HTTP headers. Could be either password or JWT token."
       operationId: "changePassword"
       consumes:
       - "application/json"
@@ -812,8 +931,8 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Check if the UKC pair is alive and functioning properly"
-      description: "Return health status of the pair and determine if it is usable"
+      summary: "Check pair health"
+      description: "Return health status of the UKC pair and determine if it is usable"
       operationId: "getPairHealth"
       parameters:
       - name: "timeout"
@@ -830,8 +949,8 @@ paths:
     get:
       tags:
       - "Partitions"
-      summary: "Get a list of partitions"
-      description: ""
+      summary: "List partitions"
+      description: "Get a list of partitions."
       operationId: "listPartitions"
       produces:
       - "application/json"
@@ -860,8 +979,8 @@ paths:
     post:
       tags:
       - "Partitions"
-      summary: "Create a new partition"
-      description: "Create a new logical partition. Can optionally create a default\
+      summary: "Create new partition"
+      description: "Create a new logical partition. It can optionally create a default\
         \ client certificate for the new partition."
       operationId: "createPartition"
       consumes:
@@ -896,7 +1015,7 @@ paths:
       tags:
       - "Partitions"
       summary: "Get partition info"
-      description: ""
+      description: "Get partition information."
       operationId: "getPartition"
       produces:
       - "application/json"
@@ -917,9 +1036,9 @@ paths:
     delete:
       tags:
       - "Partitions"
-      summary: "Delete a partition"
-      description: "Deletes a partition, the partition should not contain any keys\
-        \ or clients in order to be deleted"
+      summary: "Delete partition"
+      description: "Deletes a partition. The partition must not contain any keys or\
+        \ clients in order to be deleted."
       operationId: "deletePartition"
       produces:
       - "application/json"
@@ -941,7 +1060,7 @@ paths:
       tags:
       - "Partitions"
       summary: "Recover partition"
-      description: ""
+      description: "Recover partition."
       operationId: "recoverPartition"
       consumes:
       - "application/json"
@@ -976,8 +1095,8 @@ paths:
     get:
       tags:
       - "Partitions"
-      summary: "Get a list of configuration parameters for a partition"
-      description: "Get all settings for a partition"
+      summary: "List partition settings"
+      description: "Get a list of configuration parameters for a partition."
       operationId: "getPartitionSettings"
       produces:
       - "application/json"
@@ -1013,7 +1132,7 @@ paths:
     put:
       tags:
       - "Partitions"
-      summary: "Updates one or more partition configuration parameters"
+      summary: "Update partition settings"
       description: "Use this method to change one or more settings for the partition."
       operationId: "updatePartitionSetting"
       consumes:
@@ -1049,10 +1168,10 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Return random bytes from the UKC server. By default it returns 32\
-        \ bytes, unless size is specified."
-      description: "The UKC random number generator is combined from different entropy\
-        \ sources of the different servers in the UKC cluster"
+      summary: "Generate random bytes"
+      description: "Get random bytes from the UKC server. By default it returns 32\
+        \ bytes, unless size is specified. The UKC random number generator is combined\
+        \ from different entropy sources of the different servers in the UKC cluster"
       operationId: "generateRandom"
       produces:
       - "application/json"
@@ -1078,11 +1197,12 @@ paths:
     put:
       tags:
       - "General"
-      summary: "Add random bytes to the UKC entropy source"
-      description: "Different clients can add entropy to the server. Collecting entropy\
-        \ from the clients can enhance the strength of the UKC random number generator.\
-        \ This function only adds entropy, i.e. if the provided value has no entropy,\
-        \ it does not harm the generator quality"
+      summary: "Add entropy bytes"
+      description: "Add random bytes to the UKC entropy source. Different clients\
+        \ can add entropy to the server. Collecting entropy from the clients can enhance\
+        \ the strength of the UKC random number generator. This function only adds\
+        \ entropy, i.e. if the provided value has no entropy, it does not harm the\
+        \ generator quality."
       operationId: "addRandomEntropyBytes"
       consumes:
       - "application/json"
@@ -1105,8 +1225,8 @@ paths:
     get:
       tags:
       - "Roles"
-      summary: "List all roles in a partition"
-      description: "Return a list of all roles in a partition"
+      summary: "List partition roles"
+      description: "Return a list of all roles in a partition."
       operationId: "listRoles"
       produces:
       - "application/json"
@@ -1145,8 +1265,8 @@ paths:
     post:
       tags:
       - "Roles"
-      summary: "Creates a new role"
-      description: "Create a new role in a given partition"
+      summary: "Create a new role"
+      description: "Create a new role in a given partition."
       operationId: "createRole"
       consumes:
       - "application/json"
@@ -1180,8 +1300,8 @@ paths:
     get:
       tags:
       - "Roles"
-      summary: "Get details of an existing role"
-      description: "Return details of a role"
+      summary: "Get role details"
+      description: "Get details of an existing role."
       operationId: "getRole"
       produces:
       - "application/json"
@@ -1212,8 +1332,8 @@ paths:
     put:
       tags:
       - "Roles"
-      summary: "Update Role"
-      description: "Update Role"
+      summary: "Update role"
+      description: "Update a role."
       operationId: "updateRole"
       produces:
       - "application/json"
@@ -1249,8 +1369,8 @@ paths:
     delete:
       tags:
       - "Roles"
-      summary: "Deletes a role"
-      description: ""
+      summary: "Delete a role"
+      description: "Deletes a role."
       operationId: "deleteRole"
       produces:
       - "application/json"
@@ -1275,9 +1395,9 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Return specific server certificate"
+      summary: "Get server certificate"
       description: "Download this specific server certificate. It is used for registering\
-        \ new servers"
+        \ new servers."
       operationId: "selfCertGet"
       produces:
       - "application/x-x509-user-cert,application/json"
@@ -1293,8 +1413,8 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Return UKC root CA certificate"
-      description: "Download the root CA certificate of UKC"
+      summary: "Get root certificate"
+      description: "Download the root CA certificate of UKC."
       operationId: "getCaCert"
       produces:
       - "application/x-pkcs7-certificates,application/json"
@@ -1310,8 +1430,8 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get the new auxiliary server certificate"
-      description: ""
+      summary: "Get auxiliary certificate"
+      description: "Get the new auxiliary server certificate."
       operationId: "getNewAuxiliary"
       consumes:
       - "application/json"
@@ -1340,8 +1460,8 @@ paths:
     post:
       tags:
       - "System"
-      summary: "Adds a new auxiliary server"
-      description: ""
+      summary: "Add auxiliary server"
+      description: "Add a new auxiliary server."
       operationId: "addAuxServer"
       consumes:
       - "application/json"
@@ -1375,8 +1495,8 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get the new crypto server pair certificates"
-      description: ""
+      summary: "Get server pair certificates"
+      description: "Get the new crypto server pair certificates."
       operationId: "getNewPair"
       consumes:
       - "application/json"
@@ -1416,8 +1536,8 @@ paths:
     post:
       tags:
       - "System"
-      summary: "Adds a new crypto server pair."
-      description: ""
+      summary: "Add UKC server pair"
+      description: "Add a new UKC server pair (Entry Point and Partner)."
       operationId: "addServerPair"
       consumes:
       - "application/json"
@@ -1451,8 +1571,8 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get detailed server information"
-      description: ""
+      summary: "Get server info"
+      description: "Get detailed server information."
       operationId: "getServer"
       produces:
       - "application/json"
@@ -1478,10 +1598,10 @@ paths:
     delete:
       tags:
       - "System"
-      summary: "Remove a server or server pair from the UKC cluster"
-      description: "Removes an Auxiliary server or server pair from UKC cluster. A\
-        \ server pair is treated as one unit, identified by the host of it's EntryPoint\
-        \ server."
+      summary: "Delete server"
+      description: "Removes an auxiliary server or server pair from UKC cluster. A\
+        \ server pair is treated as one unit, identified by the host of its Entry\
+        \ Point server."
       operationId: "deleteServer"
       consumes:
       - "application/json"
@@ -1504,8 +1624,8 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get the servers and root ca certificates"
-      description: ""
+      summary: "Get system certificates"
+      description: "Get the UKC servers and root CA certificates."
       operationId: "getSystemCertificates"
       consumes:
       - "application/json"
@@ -1529,8 +1649,8 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get alerts associated with the servers and root ca certificates"
-      description: ""
+      summary: "Get certificate alerts"
+      description: "Get alerts associated with the servers and root CA certificates."
       operationId: "getSystemAlerts"
       consumes:
       - "application/json"
@@ -1549,8 +1669,8 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get specific system certificate"
-      description: ""
+      summary: "Get specific certificate"
+      description: "Get specific system certificate."
       operationId: "getSystemCertificate"
       consumes:
       - "application/json"
@@ -1579,8 +1699,8 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get specific system certificate alert"
-      description: ""
+      summary: "Get specific certificate alert"
+      description: "Get specific system certificate alert."
       operationId: "getSystemCertificateAlerts"
       consumes:
       - "application/json"
@@ -1604,8 +1724,8 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get a root CA signed key JWS"
-      description: ""
+      summary: "Get integrity key"
+      description: "Get a root CA key signed with JWS."
       operationId: "getIntegrityKey"
       consumes:
       - "application/json"
@@ -1629,9 +1749,9 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get UKC system configuration parameters"
-      description: "Returns a list of key-value entries which represent the configuration\
-        \ parameters for the UKC system"
+      summary: "Get system settings"
+      description: "Get UKC system configuration parameters. Returns a list of key-value\
+        \ entries that represent the configuration parameters for the UKC system."
       operationId: "getSettings"
       produces:
       - "application/json"
@@ -1655,8 +1775,8 @@ paths:
     put:
       tags:
       - "System"
-      summary: "Sets one or more system configuration parameters"
-      description: "Sets the value for one or more system configuration parameters"
+      summary: "Set system settings"
+      description: "Sets the value for one or more system configuration parameters."
       operationId: "setSettings"
       consumes:
       - "application/json"
@@ -1683,12 +1803,81 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/token:
+    post:
+      tags:
+      - "Authentication"
+      summary: "Get token"
+      description: "Returns an authentication token which can be used in future calls\
+        \ for authentication."
+      operationId: "getToken"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "grantType"
+        in: "formData"
+        required: true
+        type: "string"
+      - name: "username"
+        in: "formData"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "formData"
+        required: false
+        type: "string"
+      - name: "token"
+        in: "formData"
+        required: false
+        type: "string"
+      - name: "assertion"
+        in: "formData"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/OauthToken"
+        401:
+          description: "Authentication failure, the system could not verify the user\
+            \ name and password passed in the request header"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/token/revoke:
+    post:
+      tags:
+      - "Authentication"
+      summary: "Revoke all tokens"
+      description: "Revokes all tokens related to given authentication."
+      operationId: "revokeToken"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "token"
+        in: "formData"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+        401:
+          description: "Authentication failure, the system could not verify the user\
+            \ name and password passed in the request header"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/topology:
     get:
       tags:
       - "System"
-      summary: "Return the topology in the cluster including servers status"
-      description: ""
+      summary: "Get cluster topology"
+      description: "Return the topology in the cluster including servers status."
       operationId: "getTopology"
       produces:
       - "application/json"
@@ -1710,8 +1899,8 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Get all trusted certificates"
-      description: ""
+      summary: "Get trusted certificates"
+      description: "Get all trusted certificates."
       operationId: "getTrust"
       produces:
       - "application/json"
@@ -1730,8 +1919,8 @@ paths:
     get:
       tags:
       - "Users"
-      summary: "List all users in a partition"
-      description: "Return a list of all users in a partition"
+      summary: "List partition users"
+      description: "Return a list of all users in a partition."
       operationId: "listUsers"
       produces:
       - "application/json"
@@ -1765,8 +1954,8 @@ paths:
     post:
       tags:
       - "Users"
-      summary: "Creates a new user"
-      description: "Create a new user in a given partition"
+      summary: "Create a user"
+      description: "Create a new user in a given partition."
       operationId: "createUser"
       consumes:
       - "application/json"
@@ -1800,8 +1989,8 @@ paths:
     put:
       tags:
       - "Users"
-      summary: "Recover so password"
-      description: "Recover so password, Root SO can do it for other SOs."
+      summary: "Recover SO password"
+      description: "Recover the SO password. The Root SO can do it for other SOs."
       operationId: "recoverSoPassword"
       consumes:
       - "application/json"
@@ -1836,8 +2025,8 @@ paths:
     get:
       tags:
       - "Users"
-      summary: "Get details of an existing user"
-      description: "Return details of a user"
+      summary: "Get user details"
+      description: "Get details of an existing user."
       operationId: "getUser"
       produces:
       - "application/json"
@@ -1863,8 +2052,8 @@ paths:
     put:
       tags:
       - "Users"
-      summary: "Change an existing user role"
-      description: "Return details of a user"
+      summary: "Change user role"
+      description: "Change an existing user role."
       operationId: "changeUserRole"
       produces:
       - "application/json"
@@ -1896,8 +2085,8 @@ paths:
     delete:
       tags:
       - "Users"
-      summary: "Deletes a user"
-      description: ""
+      summary: "Delete a user"
+      description: "Delete a user."
       operationId: "deleteUser"
       produces:
       - "application/json"
@@ -1923,8 +2112,8 @@ paths:
       tags:
       - "Users"
       summary: "Reset user password"
-      description: "Reset user password, SO can do it for users in his partition.\
-        \ root parition SO can do it to SO of other partitions."
+      description: "Reset user password. SO can do it for users in his partition.\
+        \ The root parition SO can do it to SO of any partition."
       operationId: "resetUserPassword"
       consumes:
       - "application/json"
@@ -1981,6 +2170,8 @@ definitions:
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
         - "DB_BACKUP_INCONSISTENT"
+        - "SECRET_ABOUT_TO_EXPIRE"
+        - "SECRET_EXPIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1998,8 +2189,8 @@ definitions:
         enum:
         - "CLIENTS"
         - "SYSTEM"
-        - "BACKUP"
         - "KEYS"
+        - "BACKUP"
       alertType:
         type: "string"
         readOnly: true
@@ -2010,6 +2201,8 @@ definitions:
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
         - "DB_BACKUP_INCONSISTENT"
+        - "SECRET_ABOUT_TO_EXPIRE"
+        - "SECRET_EXPIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -2176,6 +2369,8 @@ definitions:
         type: "string"
         example: "~.codeSign.developers"
         readOnly: true
+      createdAt:
+        type: "string"
       activationStatus:
         type: "string"
         description: "Client activation status"
@@ -2194,7 +2389,9 @@ definitions:
         - "CERTIFICATE_DOWNLOAD"
         - "EXTERNAL"
         - "TEMPLATE"
+        - "SECRET"
         - "EPHEMERAL"
+        - "PUBLIC_KEY"
       lastUpdatedAt:
         type: "string"
         description: "Last update time for this client record"
@@ -2213,13 +2410,16 @@ definitions:
       allowNat:
         type: "boolean"
         description: "Allow client use NAT"
-      certificateExpiration:
+      ipRange:
+        type: "string"
+        description: "Client IP range"
+      expiresAt:
+        type: "string"
+        description: "Client secret expiration date"
+      expiration:
         type: "integer"
         format: "int32"
-        description: "Client certificate validity in minutes"
-      certificateRenewRequired:
-        type: "boolean"
-        description: "Is client certificate need to be renewed"
+        description: "Client secret expiration time (ms)"
       activationCodeValidity:
         type: "integer"
         format: "int32"
@@ -2231,23 +2431,38 @@ definitions:
       activationCodeExpiration:
         type: "string"
         description: "Client activation code expiration date"
-      ipRange:
-        type: "string"
-        description: "Client IP range"
       template:
         type: "string"
         description: "Client template"
       activationCode:
         type: "string"
         description: "Client activation code"
+      certificateRenewRequired:
+        type: "boolean"
+        description: "Is client certificate need to be renewed"
+      grantTypes:
+        type: "array"
+        description: "Client grant types"
+        uniqueItems: true
+        items:
+          type: "string"
+          enum:
+          - "CLIENT_CREDENTIALS"
+          - "PASSWORD"
+          - "REFRESH_TOKEN"
+          - "JWT_BEARER"
       certificateInfo:
         description: "Client certificate info"
         $ref: "#/definitions/CertificateInfo"
       certExpiresAt:
         type: "string"
         description: "Client certificate expiration date"
-      createdAt:
-        type: "string"
+        readOnly: true
+      certificateExpiration:
+        type: "integer"
+        format: "int32"
+        description: "Client certificate validity in minutes"
+        readOnly: true
       alertLevel:
         type: "string"
         readOnly: true
@@ -2256,6 +2471,9 @@ definitions:
       version:
         type: "string"
         description: "Client version"
+      secret:
+        type: "string"
+        description: "Client secret"
     description: "A UKC new client"
   ClientListResponse:
     type: "object"
@@ -2555,11 +2773,11 @@ definitions:
         type: "boolean"
         example: false
         description: "Allow client use NAT"
-      certificateExpiration:
+      expiration:
         type: "integer"
         format: "int32"
         example: 1578240
-        description: "Client certificate validity in minutes"
+        description: "Client expiration in minutes"
       activationCodeValidity:
         type: "integer"
         format: "int32"
@@ -2578,6 +2796,11 @@ definitions:
         type: "string"
         example: "0.0.0.0/0"
         description: "Client IP range"
+      certificateExpiration:
+        type: "integer"
+        format: "int32"
+        example: 1578240
+        description: "Client certificate validity in minutes"
   NewClientWithCertificate:
     type: "object"
     required:
@@ -2596,11 +2819,11 @@ definitions:
         type: "boolean"
         example: false
         description: "Allow client use NAT"
-      certificateExpiration:
+      expiration:
         type: "integer"
         format: "int32"
         example: 1578240
-        description: "Client certificate validity in minutes"
+        description: "Client expiration in minutes"
       alternativeNames:
         type: "array"
         example: "{client-ip,client-name}"
@@ -2619,6 +2842,55 @@ definitions:
           4PvFq+e7ipARgI5ZM+GZx6mpCz44DTo0JkwfRDf+BtrsaC0q68eTf2XhYOsq4fkH\nQ0uA0aVog3f5iJxCa3Hp5gxbJQ6zV6kJ0TEsuaaOhEko9sdpCoPOnRBm2i/XRD2D\n\
           6iNh8f8z0ShGsFqjDgFHyF3o+lUyj+UC6H1QW7bn"
         description: "The new client Base64 encoded Certificate Request"
+      publicKey:
+        type: "string"
+        example: "MEkwEwYHKoZIzj0CAQYIKoZIzj0DAQMDMgAE+Y+qPqI3geo2hQH8eK7Rn+YWG09T\n\
+          ejZ5QFoj9fmxFrUyYhFap6XmTdJtEi8myBmW"
+        description: "The new client Base64 encoded ECC Public Key"
+      certificateExpiration:
+        type: "integer"
+        format: "int32"
+        example: 1578240
+        description: "Client certificate validity in minutes"
+  NewClientWithSecret:
+    type: "object"
+    required:
+    - "name"
+    properties:
+      name:
+        type: "string"
+        example: "client-name"
+        description: "Client name"
+        minLength: 1
+      checkIp:
+        type: "boolean"
+        example: false
+        description: "Enforce client ip verification"
+      allowNat:
+        type: "boolean"
+        example: false
+        description: "Allow client use NAT"
+      expiration:
+        type: "integer"
+        format: "int32"
+        example: 1578240
+        description: "Client expiration in minutes"
+      ipRange:
+        type: "string"
+        example: "0.0.0.0/0"
+        description: "Client IP range"
+      grantTypes:
+        type: "array"
+        description: "Client grant types"
+        uniqueItems: true
+        items:
+          type: "string"
+          enum:
+          - "CLIENT_CREDENTIALS"
+          - "PASSWORD"
+          - "REFRESH_TOKEN"
+          - "JWT_BEARER"
+        minItems: 1
   NewPair:
     type: "object"
     required:
@@ -2663,9 +2935,13 @@ definitions:
         example: "FIPS_NONE"
         description: "The Partition FIPS Requirements"
         enum:
-        - "FIPS_ONLY"
+        - "FIPS_MANDATORY"
         - "FIPS_PREFERRED"
         - "FIPS_NONE"
+      isAllowDefaultClient:
+        type: "boolean"
+        example: false
+        description: "Allow using default client"
     description: "A UKC Partition"
   NewRole:
     type: "object"
@@ -2742,6 +3018,34 @@ definitions:
         - "STANDARD"
         - "LDAP"
     description: "A UKC new user"
+  OauthToken:
+    type: "object"
+    properties:
+      accessToken:
+        type: "string"
+        example: "eyJ...MoQ"
+        description: "Access Token"
+      tokenType:
+        type: "string"
+        example: "bearer"
+        description: "Token type"
+      expiresAt:
+        type: "string"
+        description: "Token expiration date"
+      expiresIn:
+        type: "integer"
+        format: "int32"
+        example: 1000
+        description: "The lifetime of the access token, in seconds"
+      scope:
+        type: "string"
+        example: "user"
+        description: "The provided scope (the user Role)"
+      refreshToken:
+        type: "string"
+        example: "eyJ...0N"
+        description: "Refresh Token"
+    description: "Oauth Token"
   PKInfoType:
     type: "object"
     properties:
@@ -2795,6 +3099,11 @@ definitions:
         type: "string"
         description: "partition creation date"
         readOnly: true
+      getjWTLimit:
+        type: "integer"
+        format: "int32"
+        description: "JWT usage limit"
+        readOnly: true
       lastUpdate:
         type: "string"
         description: "partition last update"
@@ -2840,7 +3149,7 @@ definitions:
         example: "FIPS_NONE"
         description: "The Partition FIPS Requirements"
         enum:
-        - "FIPS_ONLY"
+        - "FIPS_MANDATORY"
         - "FIPS_PREFERRED"
         - "FIPS_NONE"
       jWTExpiration:
@@ -2915,7 +3224,7 @@ definitions:
         description: "base64 encoded entropy bytes"
         minLength: 1
     description: "Random Entropy Bytes"
-  RefreshedClient:
+  RefreshedCertificateClient:
     type: "object"
     properties:
       certificateExpiration:
@@ -2937,6 +3246,48 @@ definitions:
         type: "string"
         example: "0.0.0.0/0"
         description: "Client IP range"
+  RefreshedPublicKeyClient:
+    type: "object"
+    required:
+    - "publicKey"
+    properties:
+      publicKey:
+        type: "string"
+        example: "MEkwEwYHKoZIzj0CAQYIKoZIzj0DAQMDMgAE+Y+qPqI3geo2hQH8eK7Rn+YWG09T\n\
+          ejZ5QFoj9fmxFrUyYhFap6XmTdJtEi8myBmW"
+        description: "The new client Base64 encoded ECC Public Key"
+        minLength: 1
+      expiration:
+        type: "integer"
+        format: "int32"
+        example: 1578240
+        description: "Client certificate validity in minutes"
+      alternativeNames:
+        type: "array"
+        example: "{client-ip,client-name}"
+        description: "Client alternative names"
+        items:
+          type: "string"
+  RefreshedSecretClient:
+    type: "object"
+    properties:
+      expiration:
+        type: "integer"
+        format: "int32"
+        example: 1578240
+        description: "Client expiration in minutes"
+      grantTypes:
+        type: "array"
+        description: "Client grant types"
+        uniqueItems: true
+        items:
+          type: "string"
+          enum:
+          - "CLIENT_CREDENTIALS"
+          - "PASSWORD"
+          - "REFRESH_TOKEN"
+          - "JWT_BEARER"
+        minItems: 1
   Role:
     type: "object"
     properties:
