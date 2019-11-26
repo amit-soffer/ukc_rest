@@ -1,46 +1,46 @@
 ---
 swagger: "2.0"
 info:
-  description: "The UKC Administration API allows managing 'Unbound Key Control' configuration\
-    \ and objects.\n\n# UKC API Overview\n\n\n## Authentication Types\n\nMost UKC\
-    \ API operations require an authorization context and user\npermissions. Users\
-    \ are identified by an authentication token attached to the\nrequest headers.\n\
-    \n### Basic Authentication\n\nUKC supports the basic authentication scheme. The\
-    \ \"Basic\" HTTP\nauthentication scheme is defined in  RFC 7617, which transmits\
-    \ credentials\nas user/password pairs, encoded using base64 in the HTTP Authorization\n\
-    header.\n\n\nThe user ID can include the required partition in the format:\n\n\
-    `username@partitionId:password`\n\n### Authentication Token\n\nThe system can\
-    \ authenticate the user with a generated authentication token,\nwhich is valid\
-    \ for a limited time. This token eliminates the need to\ntransmit the  username/password\
-    \ on every request. See `GET /authToken` for\nmore information.\n\n### Authentication\
-    \ with a Certificate\n\nThe client can authenticate with the UKC using a client\
-    \ certificate. This method can be useful to either add another layer of security\
-    \ or when you do not desire to use a username and password.\n\n### Authentication\
-    \ Failure (unauthorized)\n\nIf an operation is unauthorized, an HTTP 401 status\
-    \ code is returned with\nthe `WWW-Authenticate` header.\n\n## Partitioning\n\n\
-    UKC objects are organized into partitions. Partitioning allows namespacing\nand\
-    \ access control to objects by configuring users with roles per partition.\n\n\
-    \nThe objects contained in a partition are: \n\nUsers, Clients, Keys, Certificates,\
-    \ Secrets and other partitions\n\n### Permissions\n\nAny partition can have many\
-    \ users who can access its objects.\n\nA partition user can have one of two security\
-    \ roles:\n\n- **so** - Security Officer. Can perform all operations on the partition\n\
-    objects including administration: adding, modifying and deleting objects.\n\n\
-    - **user** - Can only perform cryptographic operations with the partition\nobjects,\
-    \ such as sign and verify, and can also edit keys, certificates and\nsecrets.\n\
-    \n### Root Partition\n\nThe default built-in partition for an UKC cluster is called\
-    \ `root` and is\ncreated automatically when setting up a new UKC cluster.\n\n\
-    ### Partition Hierarchy\n\n- __Parent partition__ - Any partition, _except_ the\
-    \ root partition, has one\nparent partition.\n\n- __Permissions inheritance__\
-    \ - User access permissions can be configured to\nbe _inherited_ from the parent\
-    \ partition. For example, a user `userA`, which\nis an SO on `partitionA`, would\
-    \ also have SO permissions on `partitionB` if\n`partitionB` is child of `partitionA`.\n\
-    \t- __Note:__ By default, access permissions are not inherited from the parent\
-    \ partition. To use permission inheritance, it should be configured explicitly.\n\
-    \  \n### Default Partition Context\n\nFor every request the _default partition_\
-    \ is the home partition of the\nconnected user.\n\n\nFor example:\n  - `so@partitionA`\
-    \ - the default partition is `partitionA`.\n  - `user@partitionA.partitionB` -\
-    \ the default partition is `partitionB`, which is a child of `partitionA`.\n \
-    \ - `so@partitionB` - the default partition is `partitionB`, which is child of\
+  description: "The Unbound Key Control Administration API allows managing 'Unbound\
+    \ Key Control' configuration and objects.\n\n# UKC API Overview\n\n\n## Authentication\
+    \ Types\n\nMost UKC API operations require an authorization context and user\n\
+    permissions. Users are identified by an authentication token attached to the\n\
+    request headers.\n\n### Basic Authentication\n\nUKC supports the basic authentication\
+    \ scheme. The \"Basic\" HTTP\nauthentication scheme is defined in  RFC 7617, which\
+    \ transmits credentials\nas user/password pairs, encoded using base64 in the HTTP\
+    \ Authorization\nheader.\n\n\nThe user ID can include the required partition in\
+    \ the format:\n\n`username@partitionId:password`\n\n### Authentication Token\n\
+    \nThe system can authenticate the user with a generated authentication token,\n\
+    which is valid for a limited time. This token eliminates the need to\ntransmit\
+    \ the  username/password on every request. See `GET /authToken` for\nmore information.\n\
+    \n### Authentication with a Certificate\n\nThe client can authenticate with the\
+    \ UKC using a client certificate. This method can be useful to either add another\
+    \ layer of security or when you do not desire to use a username and password.\n\
+    \n### Authentication Failure (unauthorized)\n\nIf an operation is unauthorized,\
+    \ an HTTP 401 status code is returned with\nthe `WWW-Authenticate` header.\n\n\
+    ## Partitioning\n\nUKC objects are organized into partitions. Partitioning allows\
+    \ namespacing\nand access control to objects by configuring users with roles per\
+    \ partition.\n\n\nThe objects contained in a partition are: \n\nUsers, Clients,\
+    \ Keys, Certificates, Secrets and other partitions\n\n### Permissions\n\nAny partition\
+    \ can have many users who can access its objects.\n\nA partition user can have\
+    \ one of two security roles:\n\n- **so** - Security Officer. Can perform all operations\
+    \ on the partition\nobjects including administration: adding, modifying and deleting\
+    \ objects.\n\n- **user** - Can only perform cryptographic operations with the\
+    \ partition\nobjects, such as sign and verify, and can also edit keys, certificates\
+    \ and\nsecrets.\n\n### Root Partition\n\nThe default built-in partition for an\
+    \ UKC cluster is called `root` and is\ncreated automatically when setting up a\
+    \ new UKC cluster.\n\n### Partition Hierarchy\n\n- __Parent partition__ - Any\
+    \ partition, _except_ the root partition, has one\nparent partition.\n\n- __Permissions\
+    \ inheritance__ - User access permissions can be configured to\nbe _inherited_\
+    \ from the parent partition. For example, a user `userA`, which\nis an SO on `partitionA`,\
+    \ would also have SO permissions on `partitionB` if\n`partitionB` is child of\
+    \ `partitionA`.\n\t- __Note:__ By default, access permissions are not inherited\
+    \ from the parent partition. To use permission inheritance, it should be configured\
+    \ explicitly.\n  \n### Default Partition Context\n\nFor every request the _default\
+    \ partition_ is the home partition of the\nconnected user.\n\n\nFor example:\n\
+    \  - `so@partitionA` - the default partition is `partitionA`.\n  - `user@partitionA.partitionB`\
+    \ - the default partition is `partitionB`, which is a child of `partitionA`.\n\
+    \  - `so@partitionB` - the default partition is `partitionB`, which is child of\
     \ the root partition.\n  \n### Object Path\n\n- A UKC object, such as User or\
     \ Key, can be referenced by its unique object\npath, which may be absolute or\
     \ relative to the default partition.\n\n- The object path is unique per object\
@@ -69,7 +69,7 @@ info:
     \ for different jobs.\n\n\n## Common Errors\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error\n- 404 - Resource\
     \ not found. Verify that the url exists\n- 401 - Unauthorized"
-  version: "2.0.1906"
+  version: "2.0.1910"
   title: "UKC Admin API"
   contact:
     name: "Contact"
@@ -133,7 +133,7 @@ paths:
       tags:
       - "Backup"
       summary: "List backups"
-      description: "List all backup records"
+      description: "List all backup items"
       operationId: "listDbBackups"
       parameters:
       - name: "from"
@@ -210,7 +210,7 @@ paths:
     get:
       tags:
       - "Backup"
-      summary: "Get database backup info"
+      summary: "Get backup information"
       description: "Get database backup information"
       operationId: "getDbBackup"
       parameters:
@@ -230,7 +230,7 @@ paths:
     delete:
       tags:
       - "Backup"
-      summary: "Delete backup record"
+      summary: "Delete backup"
       description: "Delete a backup record in the database."
       operationId: "deleteDbBackup"
       parameters:
@@ -249,7 +249,7 @@ paths:
     get:
       tags:
       - "Backup"
-      summary: "Get alerts from backup"
+      summary: "Check for backup alert"
       description: "Get alerts from a backup. Returns an alert if backup digest test\
         \ fails."
       operationId: "getBackupAlerts"
@@ -490,7 +490,7 @@ paths:
     put:
       tags:
       - "Clients"
-      summary: "Update client properties"
+      summary: "Update client details"
       description: "Update client properties."
       operationId: "updateClient"
       produces:
@@ -595,7 +595,7 @@ paths:
     get:
       tags:
       - "Clients"
-      summary: "Get client alerts"
+      summary: "Get alerts for a specific client"
       description: "Return the alerts for a specific client."
       operationId: "getClientAlerts"
       produces:
@@ -726,7 +726,7 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Return system information"
+      summary: "Get system information"
       description: "Return system information, including version and supported capabilities.\
         \ If authentication is provided, it returns the allowed operations."
       operationId: "getSystemInfo"
@@ -979,7 +979,7 @@ paths:
     post:
       tags:
       - "Partitions"
-      summary: "Create new partition"
+      summary: "Create a new partition"
       description: "Create a new logical partition. It can optionally create a default\
         \ client certificate for the new partition."
       operationId: "createPartition"
@@ -1014,7 +1014,7 @@ paths:
     get:
       tags:
       - "Partitions"
-      summary: "Get partition info"
+      summary: "Get partition information"
       description: "Get partition information."
       operationId: "getPartition"
       produces:
@@ -1332,7 +1332,7 @@ paths:
     put:
       tags:
       - "Roles"
-      summary: "Update role"
+      summary: "Update a role"
       description: "Update a role."
       operationId: "updateRole"
       produces:
@@ -1537,7 +1537,7 @@ paths:
       tags:
       - "System"
       summary: "Add UKC server pair"
-      description: "Add a new UKC server pair (Entry Point and Partner)."
+      description: "Add a new UKC server pair."
       operationId: "addServerPair"
       consumes:
       - "application/json"
@@ -1571,7 +1571,7 @@ paths:
     get:
       tags:
       - "System"
-      summary: "Get server info"
+      summary: "Get server details"
       description: "Get detailed server information."
       operationId: "getServer"
       produces:
@@ -1803,11 +1803,45 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/system/signlogs:
+    get:
+      tags:
+      - "System"
+      summary: "Get signed logs"
+      description: "Return signed logs (compressed) from the UKC engine."
+      operationId: "logSign"
+      produces:
+      - "application/json"
+      - "application/x-tar"
+      parameters:
+      - name: "from"
+        in: "query"
+        description: "from"
+        required: false
+        type: "string"
+      - name: "to"
+        in: "query"
+        description: "to"
+        required: false
+        type: "string"
+      - name: "period"
+        in: "query"
+        description: "period"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "string"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/token:
     post:
       tags:
       - "Authentication"
-      summary: "Get token"
+      summary: "Get OAuth token"
       description: "Returns an authentication token which can be used in future calls\
         \ for authentication."
       operationId: "getToken"
@@ -1851,7 +1885,7 @@ paths:
     post:
       tags:
       - "Authentication"
-      summary: "Revoke all tokens"
+      summary: "Revoke all OAuth tokens"
       description: "Revokes all tokens related to given authentication."
       operationId: "revokeToken"
       consumes:
@@ -2478,7 +2512,7 @@ definitions:
   ClientListResponse:
     type: "object"
     properties:
-      total:
+      totalItems:
         type: "integer"
         format: "int32"
         readOnly: true
@@ -2490,7 +2524,7 @@ definitions:
         type: "integer"
         format: "int32"
         readOnly: true
-      records:
+      items:
         type: "array"
         readOnly: true
         items:
@@ -2529,12 +2563,14 @@ definitions:
         type: "string"
       file:
         type: "string"
-      serverName:
-        type: "string"
+      pairHostnames:
+        type: "array"
+        items:
+          type: "string"
       version:
         type: "string"
       digestDiff:
-        type: "string"
+        $ref: "#/definitions/DigestDiff"
       alertLevel:
         type: "string"
         readOnly: true
@@ -2543,7 +2579,7 @@ definitions:
   DbBackupListResponse:
     type: "object"
     properties:
-      total:
+      totalItems:
         type: "integer"
         format: "int32"
         readOnly: true
@@ -2555,11 +2591,27 @@ definitions:
         type: "integer"
         format: "int32"
         readOnly: true
-      records:
+      items:
         type: "array"
         readOnly: true
         items:
           $ref: "#/definitions/DbBackup"
+  DiffRecord:
+    type: "object"
+    properties:
+      sectionDiff:
+        type: "string"
+      entitiesDiff:
+        type: "array"
+        items:
+          type: "string"
+  DigestDiff:
+    type: "object"
+    properties:
+      diffRecords:
+        type: "array"
+        items:
+          $ref: "#/definitions/DiffRecord"
   ECCBipKeyInfo:
     type: "object"
     properties:
@@ -3162,7 +3214,7 @@ definitions:
   PartitionListResponse:
     type: "object"
     properties:
-      total:
+      totalItems:
         type: "integer"
         format: "int32"
         readOnly: true
@@ -3174,7 +3226,7 @@ definitions:
         type: "integer"
         format: "int32"
         readOnly: true
-      records:
+      items:
         type: "array"
         readOnly: true
         items:
@@ -3314,7 +3366,7 @@ definitions:
   RoleListResponse:
     type: "object"
     properties:
-      total:
+      totalItems:
         type: "integer"
         format: "int32"
         readOnly: true
@@ -3326,7 +3378,7 @@ definitions:
         type: "integer"
         format: "int32"
         readOnly: true
-      records:
+      items:
         type: "array"
         readOnly: true
         items:
@@ -3667,7 +3719,7 @@ definitions:
   UserListResponse:
     type: "object"
     properties:
-      total:
+      totalItems:
         type: "integer"
         format: "int32"
         readOnly: true
@@ -3679,7 +3731,7 @@ definitions:
         type: "integer"
         format: "int32"
         readOnly: true
-      records:
+      items:
         type: "array"
         readOnly: true
         items:
