@@ -1,46 +1,46 @@
 ---
 swagger: "2.0"
 info:
-  description: "The UKC Crypto API provides cryptographic services used with Keys\
-    \ \nmanaged by UKC.\n\n\n# UKC API Overview\n\n\n## Authentication Types\n\nMost\
-    \ UKC API operations require an authorization context and user\npermissions. Users\
-    \ are identified by an authentication token attached to the\nrequest headers.\n\
-    \n### Basic Authentication\n\nUKC supports the basic authentication scheme. The\
-    \ \"Basic\" HTTP\nauthentication scheme is defined in  RFC 7617, which transmits\
-    \ credentials\nas user/password pairs, encoded using base64 in the HTTP Authorization\n\
-    header.\n\n\nThe user ID can include the required partition in the format:\n\n\
-    `username@partitionId:password`\n\n### Authentication Token\n\nThe system can\
-    \ authenticate the user with a generated authentication token,\nwhich is valid\
-    \ for a limited time. This token eliminates the need to\ntransmit the  username/password\
-    \ on every request. See `GET /authToken` for\nmore information.\n\n### Authentication\
-    \ with a Certificate\n\nThe client can authenticate with the UKC using a client\
-    \ certificate. This method can be useful to either add another layer of security\
-    \ or when you do not desire to use a username and password.\n\n### Authentication\
-    \ Failure (unauthorized)\n\nIf an operation is unauthorized, an HTTP 401 status\
-    \ code is returned with\nthe `WWW-Authenticate` header.\n\n## Partitioning\n\n\
-    UKC objects are organized into partitions. Partitioning allows namespacing\nand\
-    \ access control to objects by configuring users with roles per partition.\n\n\
-    \nThe objects contained in a partition are: \n\nUsers, Clients, Keys, Certificates,\
-    \ Secrets and other partitions\n\n### Permissions\n\nAny partition can have many\
-    \ users who can access its objects.\n\nA partition user can have one of two security\
-    \ roles:\n\n- **so** - Security Officer. Can perform all operations on the partition\n\
-    objects including administration: adding, modifying and deleting objects.\n\n\
-    - **user** - Can only perform cryptographic operations with the partition\nobjects,\
-    \ such as sign and verify, and can also edit keys, certificates and\nsecrets.\n\
-    \n### Root Partition\n\nThe default built-in partition for an UKC cluster is called\
-    \ `root` and is\ncreated automatically when setting up a new UKC cluster.\n\n\
-    ### Partition Hierarchy\n\n- __Parent partition__ - Any partition, _except_ the\
-    \ root partition, has one\nparent partition.\n\n- __Permissions inheritance__\
-    \ - User access permissions can be configured to\nbe _inherited_ from the parent\
-    \ partition. For example, a user `userA`, which\nis an SO on `partitionA`, would\
-    \ also have SO permissions on `partitionB` if\n`partitionB` is child of `partitionA`.\n\
-    \t- __Note:__ By default, access permissions are not inherited from the parent\
-    \ partition. To use permission inheritance, it should be configured explicitly.\n\
-    \  \n### Default Partition Context\n\nFor every request the _default partition_\
-    \ is the home partition of the\nconnected user.\n\n\nFor example:\n  - `so@partitionA`\
-    \ - the default partition is `partitionA`.\n  - `user@partitionA.partitionB` -\
-    \ the default partition is `partitionB`, which is a child of `partitionA`.\n \
-    \ - `so@partitionB` - the default partition is `partitionB`, which is child of\
+  description: "The Unbound Key Control Crypto API provides cryptographic services\
+    \ used with keys\nmanaged by UKC.\n\n\n# UKC API Overview\n\n\n## Authentication\
+    \ Types\n\nMost UKC API operations require an authorization context and user\n\
+    permissions. Users are identified by an authentication token attached to the\n\
+    request headers.\n\n### Basic Authentication\n\nUKC supports the basic authentication\
+    \ scheme. The \"Basic\" HTTP\nauthentication scheme is defined in  RFC 7617, which\
+    \ transmits credentials\nas user/password pairs, encoded using base64 in the HTTP\
+    \ Authorization\nheader.\n\n\nThe user ID can include the required partition in\
+    \ the format:\n\n`username@partitionId:password`\n\n### Authentication Token\n\
+    \nThe system can authenticate the user with a generated authentication token,\n\
+    which is valid for a limited time. This token eliminates the need to\ntransmit\
+    \ the  username/password on every request. See `GET /authToken` for\nmore information.\n\
+    \n### Authentication with a Certificate\n\nThe client can authenticate with the\
+    \ UKC using a client certificate. This method can be useful to either add another\
+    \ layer of security or when you do not desire to use a username and password.\n\
+    \n### Authentication Failure (unauthorized)\n\nIf an operation is unauthorized,\
+    \ an HTTP 401 status code is returned with\nthe `WWW-Authenticate` header.\n\n\
+    ## Partitioning\n\nUKC objects are organized into partitions. Partitioning allows\
+    \ namespacing\nand access control to objects by configuring users with roles per\
+    \ partition.\n\n\nThe objects contained in a partition are: \n\nUsers, Clients,\
+    \ Keys, Certificates, Secrets and other partitions\n\n### Permissions\n\nAny partition\
+    \ can have many users who can access its objects.\n\nA partition user can have\
+    \ one of two security roles:\n\n- **so** - Security Officer. Can perform all operations\
+    \ on the partition\nobjects including administration: adding, modifying and deleting\
+    \ objects.\n\n- **user** - Can only perform cryptographic operations with the\
+    \ partition\nobjects, such as sign and verify, and can also edit keys, certificates\
+    \ and\nsecrets.\n\n### Root Partition\n\nThe default built-in partition for an\
+    \ UKC cluster is called `root` and is\ncreated automatically when setting up a\
+    \ new UKC cluster.\n\n### Partition Hierarchy\n\n- __Parent partition__ - Any\
+    \ partition, _except_ the root partition, has one\nparent partition.\n\n- __Permissions\
+    \ inheritance__ - User access permissions can be configured to\nbe _inherited_\
+    \ from the parent partition. For example, a user `userA`, which\nis an SO on `partitionA`,\
+    \ would also have SO permissions on `partitionB` if\n`partitionB` is child of\
+    \ `partitionA`.\n\t- __Note:__ By default, access permissions are not inherited\
+    \ from the parent partition. To use permission inheritance, it should be configured\
+    \ explicitly.\n  \n### Default Partition Context\n\nFor every request the _default\
+    \ partition_ is the home partition of the\nconnected user.\n\n\nFor example:\n\
+    \  - `so@partitionA` - the default partition is `partitionA`.\n  - `user@partitionA.partitionB`\
+    \ - the default partition is `partitionB`, which is a child of `partitionA`.\n\
+    \  - `so@partitionB` - the default partition is `partitionB`, which is child of\
     \ the root partition.\n  \n### Object Path\n\n- A UKC object, such as User or\
     \ Key, can be referenced by its unique object\npath, which may be absolute or\
     \ relative to the default partition.\n\n- The object path is unique per object\
@@ -69,7 +69,7 @@ info:
     \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
     \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
-  version: "2.0.1906"
+  version: "2.0.1910"
   title: "Unbound Key Control Server"
   contact:
     name: "Contact"
@@ -113,7 +113,7 @@ paths:
     get:
       tags:
       - "General"
-      summary: "Return system information"
+      summary: "Get system information"
       description: "Return system information, including version and supported capabilities.\
         \ If authentication is provided, it returns the allowed operations."
       operationId: "getSystemInfo"
@@ -225,8 +225,8 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Import asymmetric key"
-      description: "Import a new asymmetric key based on the given file."
+      summary: "Import key"
+      description: "Import a key based on the given file."
       operationId: "importKey"
       consumes:
       - "multipart/form-data"
@@ -283,6 +283,16 @@ paths:
         description: "import only key (no chain)"
         required: false
         type: "boolean"
+      - name: "isSymmetric"
+        in: "formData"
+        description: "is key is symmetric"
+        required: false
+        type: "boolean"
+      - name: "symmetricKeyType"
+        in: "formData"
+        description: "the symmetric key type"
+        required: false
+        type: "string"
       - name: "testMode"
         in: "formData"
         description: "get key info without importing"
@@ -302,7 +312,7 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get key alerts"
+      summary: "Get key alerts summary"
       description: "Get a summary of key alerts."
       operationId: "getAlertsSummary"
       produces:
@@ -325,8 +335,9 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Generate asymmetric key"
-      description: "Generate new asymmetric key, key format is provided as a parameter."
+      summary: "Generate key"
+      description: "Generate a new asymmetric or symmetric key. The key format is\
+        \ provided as a parameter."
       operationId: "generateKey"
       consumes:
       - "application/json"
@@ -416,7 +427,7 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get detailed key info"
+      summary: "Get key details"
       description: "Get detailed key information."
       operationId: "getKey"
       produces:
@@ -455,7 +466,7 @@ paths:
     put:
       tags:
       - "Keys"
-      summary: "Update key"
+      summary: "Update a key"
       description: "Update an existing key."
       operationId: "updateKey"
       consumes:
@@ -490,7 +501,7 @@ paths:
     delete:
       tags:
       - "Keys"
-      summary: "Delete key"
+      summary: "Delete a key"
       description: "Delete the specified key."
       operationId: "deleteKey"
       produces:
@@ -516,8 +527,8 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get client details"
-      description: "Get details of an existing client."
+      summary: "Get alerts for a specific key"
+      description: "Return the alerts for a specific key."
       operationId: "getKeyAlerts"
       produces:
       - "application/json"
@@ -628,8 +639,8 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Unwrap and import new key"
-      description: "Unwrap and import a new key."
+      summary: "Derive a new key"
+      description: "Derive a new key."
       operationId: "derive"
       consumes:
       - "application/json"
@@ -822,8 +833,9 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get operations per UID"
-      description: "Return specific allowed operations for a specific key UID."
+      summary: "Get key operations"
+      description: "Return specific allowed operations on a key for a specific key\
+        \ UID."
       operationId: "getKeyPermissions"
       produces:
       - "application/json"
@@ -1102,13 +1114,14 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get key data"
-      description: "Return the public details of an asymmetric key or exportable symmetric\
+      summary: "Get key metadata"
+      description: "Return the metadata for an asymmetric key or exportable symmetric\
         \ key."
       operationId: "getKeyData"
       produces:
       - "application/json"
       - "application/x-pkcs12"
+      - "application/x-pem-file"
       parameters:
       - name: "keyId"
         in: "path"
@@ -1122,7 +1135,7 @@ paths:
         type: "string"
       - name: "password"
         in: "query"
-        description: "PFX Password"
+        description: "Password"
         required: false
         type: "string"
       responses:
@@ -1285,7 +1298,7 @@ paths:
     get:
       tags:
       - "Secrets"
-      summary: "List all secrets in a partition"
+      summary: "List secrets"
       description: "Return a list of all secrets in a partition"
       operationId: "listSecrets"
       produces:
@@ -1336,8 +1349,8 @@ paths:
     post:
       tags:
       - "Secrets"
-      summary: "Adds a new secret"
-      description: "Add new secret data with label"
+      summary: "Import secret from file"
+      description: "Import a secret from a file"
       operationId: "addFileSecret"
       consumes:
       - "multipart/form-data"
@@ -1362,6 +1375,11 @@ paths:
       - name: "description"
         in: "formData"
         description: "Key description"
+        required: false
+        type: "string"
+      - name: "groups"
+        in: "formData"
+        description: "List of groups"
         required: false
         type: "string"
       responses:
@@ -1434,8 +1452,8 @@ paths:
     get:
       tags:
       - "Secrets"
-      summary: "Get secrets groups"
-      description: ""
+      summary: "Get secret groups"
+      description: "Get groups for secrets"
       operationId: "getSecretsGroups"
       produces:
       - "application/json"
@@ -1490,7 +1508,7 @@ paths:
     post:
       tags:
       - "Secrets"
-      summary: "Adds a new secret"
+      summary: "Import secret from text"
       description: "Add new secret data with label"
       operationId: "addTextSecret"
       consumes:
@@ -1527,8 +1545,8 @@ paths:
     get:
       tags:
       - "Secrets"
-      summary: "Get the info of an existing secret"
-      description: "Return the value of a secret"
+      summary: "Get secret metadata"
+      description: "Return the metadata for an existing secret"
       operationId: "getSecret"
       consumes:
       - "application/json"
@@ -1556,8 +1574,8 @@ paths:
     put:
       tags:
       - "Secrets"
-      summary: "Updates existing secret properties"
-      description: ""
+      summary: "Update secret details"
+      description: "Update existing secret details"
       operationId: "updateSecret"
       consumes:
       - "application/json"
@@ -1591,7 +1609,7 @@ paths:
     delete:
       tags:
       - "Secrets"
-      summary: "Deletes a secret"
+      summary: "Delete a secret"
       description: "Deletes a secret by its label/ID"
       operationId: "deleteSecret"
       produces:
@@ -1617,8 +1635,8 @@ paths:
     get:
       tags:
       - "Secrets"
-      summary: "Get the value of an existing secret"
-      description: "Return the value of a secret"
+      summary: "Get secret value from file"
+      description: "Gets the value of a secret from a file."
       operationId: "getSecretFileData"
       consumes:
       - "application/json"
@@ -1648,7 +1666,7 @@ paths:
     put:
       tags:
       - "Secrets"
-      summary: "Update existing secret data"
+      summary: "Update secret data from file"
       description: "Update existing secret"
       operationId: "updateFileSecret"
       consumes:
@@ -1683,8 +1701,8 @@ paths:
     get:
       tags:
       - "Secrets"
-      summary: "Get the value of an existing secret"
-      description: "Return the value of a secret"
+      summary: "Get secret value from text"
+      description: "Gets the value of a secret from a text string"
       operationId: "getSecretTextData"
       consumes:
       - "application/json"
@@ -1713,7 +1731,7 @@ paths:
     put:
       tags:
       - "Secrets"
-      summary: "Update existing secret data"
+      summary: "Update secret data from text"
       description: "Update existing secret"
       operationId: "updateTextSecret"
       consumes:
@@ -1903,6 +1921,15 @@ definitions:
         type: "boolean"
         description: "Is Extension Critical"
     description: "Certificate x509 extension"
+  ApplicationInfo:
+    type: "object"
+    properties:
+      nameSpace:
+        type: "string"
+      data:
+        type: "object"
+        additionalProperties:
+          type: "object"
   AsymmetricCryptoParams:
     type: "object"
     properties:
@@ -2385,6 +2412,13 @@ definitions:
         type: "string"
         description: "Does the key have previous key (created by a move operation)"
         readOnly: true
+      applicationInfos:
+        type: "array"
+        description: "Application infos"
+        readOnly: true
+        uniqueItems: true
+        items:
+          $ref: "#/definitions/ApplicationInfo"
       pkInfo:
         description: "Private key (RSA/ECC) information"
         readOnly: true
@@ -2395,6 +2429,14 @@ definitions:
         readOnly: true
         items:
           $ref: "#/definitions/CertificateInfo"
+      chains:
+        type: "array"
+        description: "Key chains"
+        readOnly: true
+        items:
+          type: "array"
+          items:
+            $ref: "#/definitions/CertificateInfo"
       createdAt:
         type: "string"
         description: "Creation date"
@@ -2412,7 +2454,7 @@ definitions:
   KeyInfoListResponse:
     type: "object"
     properties:
-      total:
+      totalItems:
         type: "integer"
         format: "int32"
         readOnly: true
@@ -2424,7 +2466,7 @@ definitions:
         type: "integer"
         format: "int32"
         readOnly: true
-      records:
+      items:
         type: "array"
         readOnly: true
         items:
@@ -2771,7 +2813,7 @@ definitions:
   SecretListResponse:
     type: "object"
     properties:
-      total:
+      totalItems:
         type: "integer"
         format: "int32"
         readOnly: true
@@ -2783,7 +2825,7 @@ definitions:
         type: "integer"
         format: "int32"
         readOnly: true
-      records:
+      items:
         type: "array"
         readOnly: true
         items:
