@@ -69,7 +69,7 @@ info:
     \ for different jobs.\n\n\n## Common Errors\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error\n- 404 - Resource\
     \ not found. Verify that the url exists\n- 401 - Unauthorized"
-  version: "2.0.1910"
+  version: "2.0.2001"
   title: "UKC Admin API"
   contact:
     name: "Contact"
@@ -401,6 +401,50 @@ paths:
       - name: "partitionId"
         in: "query"
         description: "Partition ID"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "file"
+        201:
+          description: "New client created successfully"
+        202:
+          description: "ACCEPTED"
+        409:
+          description: "Object already exists"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/clients/with-cert-file:
+    post:
+      tags:
+      - "Clients"
+      summary: "Create a client with certificate"
+      description: "Creates a new client and returns the certificate."
+      operationId: "createClientWithCertificateWithFile"
+      consumes:
+      - "multipart/form-data"
+      produces:
+      - "application/json,application/x-pkcs12,application/x-x509-user-cert"
+      - "application/json"
+      - "application/x-pkcs12"
+      - "application/x-x509-user-cert"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "file"
+        in: "formData"
+        description: "key file"
+        required: true
+        type: "file"
+      - name: "newClientWithCertificate"
+        in: "formData"
+        description: "the new client"
         required: false
         type: "string"
       responses:
@@ -2206,6 +2250,7 @@ definitions:
         - "DB_BACKUP_INCONSISTENT"
         - "SECRET_ABOUT_TO_EXPIRE"
         - "SECRET_EXPIRED"
+        - "KEY_ROTATION_IS_APPROACHING"
       alertLevel:
         type: "string"
         readOnly: true
@@ -2237,6 +2282,7 @@ definitions:
         - "DB_BACKUP_INCONSISTENT"
         - "SECRET_ABOUT_TO_EXPIRE"
         - "SECRET_EXPIRED"
+        - "KEY_ROTATION_IS_APPROACHING"
       alertLevel:
         type: "string"
         readOnly: true
