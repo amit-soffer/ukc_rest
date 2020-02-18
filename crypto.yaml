@@ -69,7 +69,7 @@ info:
     \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
     \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
-  version: "2.0.1910"
+  version: "2.0.2001"
   title: "Unbound Key Control Server"
   contact:
     name: "Contact"
@@ -248,6 +248,11 @@ paths:
         description: "key id"
         required: true
         type: "string"
+      - name: "idEncoding"
+        in: "formData"
+        description: "key id encoding"
+        required: false
+        type: "string"
       - name: "password"
         in: "formData"
         description: "password for the file if required"
@@ -298,6 +303,11 @@ paths:
         description: "get key info without importing"
         required: false
         type: "boolean"
+      - name: "keyRotationInterval"
+        in: "formData"
+        description: "key rotation interval (days)"
+        required: false
+        type: "integer"
       responses:
         201:
           description: "Key generated successfully"
@@ -337,7 +347,13 @@ paths:
       - "Keys"
       summary: "Generate key"
       description: "Generate a new asymmetric or symmetric key. The key format is\
-        \ provided as a parameter."
+        \ provided as a parameter. <p>For example, to create a 256-bit AES symmetric\
+        \ key, use the parameters: <br /><code>For example, to create a 256-bit AES\
+        \ symmetric key, use the parameters:<br />{<br />&nbsp; &nbsp;\"keyId\":\"\
+        AES-KEY\",<br />&nbsp; &nbsp;\"keyFormat\": {<br />&nbsp; &nbsp; &nbsp; &nbsp;\"\
+        type\": \"AES\", \"size\": \"256\"<br />&nbsp; &nbsp;}<br />}<br /></code><p>The\
+        \ keyFormat type can be: RSA, ECC, AES, TDES, HMAC, SIV, XTS, PRF, PWD, LIMA,\
+        \ or EDDSA</p>"
       operationId: "generateKey"
       consumes:
       - "application/json"
@@ -936,6 +952,13 @@ paths:
         description: "Partition ID"
         required: false
         type: "string"
+      - name: "keyRotationInterval"
+        in: "query"
+        description: "key rotation interval"
+        required: false
+        type: "integer"
+        minimum: 0
+        format: "int32"
       - name: "keyId"
         in: "path"
         description: "The key to move. This could be either a key UID or label."
@@ -1861,6 +1884,7 @@ definitions:
         - "DB_BACKUP_INCONSISTENT"
         - "SECRET_ABOUT_TO_EXPIRE"
         - "SECRET_EXPIRED"
+        - "KEY_ROTATION_IS_APPROACHING"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1892,6 +1916,7 @@ definitions:
         - "DB_BACKUP_INCONSISTENT"
         - "SECRET_ABOUT_TO_EXPIRE"
         - "SECRET_EXPIRED"
+        - "KEY_ROTATION_IS_APPROACHING"
       alertLevel:
         type: "string"
         readOnly: true
@@ -2335,7 +2360,7 @@ definitions:
       size:
         type: "integer"
         format: "int32"
-        example: "for RSA : {2048,3072,4094}"
+        example: "for RSA : {2048,3072,4096}"
         description: "key size"
       curve:
         type: "string"
@@ -2396,6 +2421,9 @@ definitions:
         - "PREACTIVE"
         - "ACTIVE"
         - "DEACTIVATED"
+        - "COMPROMISED"
+        - "DESTROYED"
+        - "DESTROYEDCOMPROMISED"
       sync:
         type: "boolean"
         description: "This key is synchronized in within the UKC pair"
@@ -2410,7 +2438,15 @@ definitions:
         readOnly: true
       prev:
         type: "string"
-        description: "Does the key have previous key (created by a move operation)"
+        description: "Does the key have previous key (created by Rekey operation)"
+        readOnly: true
+      next:
+        type: "string"
+        description: "Does the key have next key (created by Rekey operation)"
+        readOnly: true
+      nextKeyRotationTime:
+        type: "string"
+        description: "Next key rotation time"
         readOnly: true
       applicationInfos:
         type: "array"
@@ -2494,6 +2530,11 @@ definitions:
         type: "boolean"
         example: false
         description: "True if the key is trusted"
+      keyRotationInterval:
+        type: "integer"
+        format: "int32"
+        description: "Key rotation interval"
+        minimum: 0
       exportType:
         type: "string"
         enum:
@@ -2616,6 +2657,14 @@ definitions:
         $ref: "#/definitions/KeyFormat"
       keyProperties:
         $ref: "#/definitions/KeyProperties"
+      keyIdEncoding:
+        type: "string"
+        description: "Encoding for the new key ID"
+        readOnly: true
+        enum:
+        - "PLAIN"
+        - "BASE64"
+        - "HEX"
   NewGeneratedSecret:
     type: "object"
     required:
