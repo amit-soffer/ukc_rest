@@ -69,7 +69,7 @@ info:
     \ for different jobs.\n\n## Common Errors\n\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error.\n- 404 - Resource\
     \ not found. Verify that the URL exists.\n- 401 - Unauthorized"
-  version: "2.0.2001"
+  version: "2.0.2004"
   title: "Unbound Key Control Server"
   contact:
     name: "Contact"
@@ -203,6 +203,28 @@ paths:
         items:
           type: "string"
         collectionFormat: "multi"
+      - name: "state"
+        in: "query"
+        description: "Key state"
+        required: false
+        type: "string"
+        enum:
+        - "PREACTIVE"
+        - "ACTIVE"
+        - "DEACTIVATED"
+        - "COMPROMISED"
+        - "DESTROYED"
+        - "DESTROYED_COMPROMISED"
+      - name: "isEnabled"
+        in: "query"
+        description: "Is Enabled"
+        required: false
+        type: "boolean"
+      - name: "showDestroyed"
+        in: "query"
+        description: "Include destroyed objects"
+        required: false
+        type: "boolean"
       - name: "detailed"
         in: "query"
         description: "Detailed"
@@ -308,6 +330,21 @@ paths:
         description: "key rotation interval (days)"
         required: false
         type: "integer"
+      - name: "activate"
+        in: "formData"
+        description: "activate the key"
+        required: false
+        type: "Boolean"
+      - name: "activationDate"
+        in: "formData"
+        description: "Activation Date"
+        required: false
+        type: "DateParameter"
+      - name: "deactivationDate"
+        in: "formData"
+        description: "Deactivation Date"
+        required: false
+        type: "DateParameter"
       responses:
         201:
           description: "Key generated successfully"
@@ -348,10 +385,9 @@ paths:
       summary: "Generate key"
       description: "Generate a new asymmetric or symmetric key. The key format is\
         \ provided as a parameter. <p>For example, to create a 256-bit AES symmetric\
-        \ key, use the parameters: <br /><code>For example, to create a 256-bit AES\
-        \ symmetric key, use the parameters:<br />{<br />&nbsp; &nbsp;\"keyId\":\"\
-        AES-KEY\",<br />&nbsp; &nbsp;\"keyFormat\": {<br />&nbsp; &nbsp; &nbsp; &nbsp;\"\
-        type\": \"AES\", \"size\": \"256\"<br />&nbsp; &nbsp;}<br />}<br /></code><p>The\
+        \ key, use the parameters: <br /><code>{<br />&nbsp; &nbsp;\"keyId\":\"AES-KEY\"\
+        ,<br />&nbsp; &nbsp;\"keyFormat\": {<br />&nbsp; &nbsp; &nbsp; &nbsp;\"type\"\
+        : \"AES\", \"size\": \"256\"<br />&nbsp; &nbsp;}<br />}<br /></code><p>The\
         \ keyFormat type can be: RSA, ECC, AES, TDES, HMAC, SIV, XTS, PRF, PWD, LIMA,\
         \ or EDDSA</p>"
       operationId: "generateKey"
@@ -414,6 +450,7 @@ paths:
           - "DELETE_ATTRIBUTE"
           - "DERIVE_KEY"
           - "DESTROY"
+          - "DELETE"
           - "DY_DERIVE"
           - "DY_GET_KEY_MATERIAL"
           - "DY_GET_SECRET_DATA"
@@ -428,6 +465,7 @@ paths:
           - "REVOKE"
           - "SIGN"
           - "SIGNATURE_VERIFY"
+          - "DY_ENABLE"
         collectionFormat: "multi"
       responses:
         200:
@@ -531,6 +569,39 @@ paths:
       - name: "keyId"
         in: "path"
         description: "Key ID to delete"
+        required: true
+        type: "string"
+      - name: "fullDelete"
+        in: "query"
+        description: "Delete object completely"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "OK"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/keys/{keyId}/activate:
+    post:
+      tags:
+      - "Keys"
+      summary: "Activate a key"
+      description: "Activate the specified key."
+      operationId: "activateKey"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "keyId"
+        in: "path"
+        description: "Key ID to activate"
         required: true
         type: "string"
       responses:
@@ -655,8 +726,8 @@ paths:
     post:
       tags:
       - "Keys"
-      summary: "Derive a new key"
-      description: "Derive a new key."
+      summary: "Derive and store a new key"
+      description: "Derive a new key and store it in UKC."
       operationId: "derive"
       consumes:
       - "application/json"
@@ -686,6 +757,106 @@ paths:
             $ref: "#/definitions/KeyInfo"
         201:
           description: "New key derived successfully"
+          schema:
+            $ref: "#/definitions/KeyInfo"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/keys/{keyId}/derive-key:
+    post:
+      tags:
+      - "Keys"
+      summary: "Derive a new key"
+      description: "Derive a new key and return it without storing it."
+      operationId: "deriveKey"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "keyId"
+        in: "path"
+        description: "The key used for derive"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Derivation data"
+        required: false
+        schema:
+          $ref: "#/definitions/DeriveKeyData"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Key"
+        201:
+          description: "New key derived successfully"
+          schema:
+            $ref: "#/definitions/Key"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/keys/{keyId}/disable:
+    post:
+      tags:
+      - "Keys"
+      summary: "Disable a key"
+      description: "Disable a specific key."
+      operationId: "disableKey"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "keyId"
+        in: "path"
+        description: "Key ID to enable/disable"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/KeyInfo"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/keys/{keyId}/enable:
+    post:
+      tags:
+      - "Keys"
+      summary: "Enable a key"
+      description: "Enable a specific key."
+      operationId: "enabledKey"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "keyId"
+        in: "path"
+        description: "Key ID to enable"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "OK"
           schema:
             $ref: "#/definitions/KeyInfo"
       security:
@@ -777,7 +948,12 @@ paths:
       - "Keys"
       summary: "Create MAC for a message"
       description: "Generate a Message Authentication Code (MAC) for a message. MAC\
-        \ mode is provided as a parameter."
+        \ mode is provided as a parameter.\n\n Note the following for the parameters\
+        \ in the body:\n<ul><li>iv - Externally provided IV, default encoded in BASE64.\
+        \ Must be no more than 15 bytes.</li><li>aad - Authentication data, default\
+        \ encoding is PLAIN</li><li>tagLength - For CCM, the value must be between\
+        \ 4 and 16, inclusive, and must be even. For other algorithms, the value must\
+        \ be between 1 and 16, inclusive.</li></ul>"
       operationId: "createMacWithKey"
       consumes:
       - "application/json"
@@ -882,6 +1058,7 @@ paths:
               - "DELETE_ATTRIBUTE"
               - "DERIVE_KEY"
               - "DESTROY"
+              - "DELETE"
               - "DY_DERIVE"
               - "DY_GET_KEY_MATERIAL"
               - "DY_GET_SECRET_DATA"
@@ -896,6 +1073,7 @@ paths:
               - "REVOKE"
               - "SIGN"
               - "SIGNATURE_VERIFY"
+              - "DY_ENABLE"
       security:
       - basicAuth: []
       - Authorization: []
@@ -959,6 +1137,13 @@ paths:
         type: "integer"
         minimum: 0
         format: "int32"
+      - name: "keyStateOffset"
+        in: "query"
+        description: "key state offset"
+        required: false
+        type: "integer"
+        minimum: 0
+        format: "int32"
       - name: "keyId"
         in: "path"
         description: "The key to move. This could be either a key UID or label."
@@ -976,15 +1161,47 @@ paths:
       security:
       - basicAuth: []
       - Authorization: []
+  /api/v1/keys/{keyId}/revoke:
+    post:
+      tags:
+      - "Keys"
+      summary: "Revoke a key"
+      description: "Revoke the specified key."
+      operationId: "revokeKey"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "partitionId"
+        in: "query"
+        description: "Partition ID"
+        required: false
+        type: "string"
+      - name: "keyId"
+        in: "path"
+        description: "Key ID to activate"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Revocation parameters"
+        required: false
+        schema:
+          $ref: "#/definitions/RevokeParams"
+      responses:
+        200:
+          description: "OK"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/keys/{keyId}/seal:
     post:
       tags:
       - "Keys"
       summary: "Seal clear text"
-      description: "Seal clear text into cipher text with an existing key. Parameters\
-        \ allow selecting padding mode and encryption mode. If key type is asymmetric,\
-        \ encryption is done exactly as encryption with a certificate. If key type\
-        \ is symmetric, only simple mode is supported."
+      description: "Seal clear text into cipher text with an existing key. Encryption\
+        \ is done exactly as encryption with a certificate."
       operationId: "sealWithKey"
       consumes:
       - "application/json"
@@ -1137,9 +1354,10 @@ paths:
     get:
       tags:
       - "Keys"
-      summary: "Get key metadata"
-      description: "Return the metadata for an asymmetric key or exportable symmetric\
-        \ key."
+      summary: "Get key material"
+      description: "Return the key material for an asymmetric key or exportable symmetric\
+        \ key.\n\nYou can request the asymmetric key in PFX or PEM format and symmetric\
+        \ keys in raw format."
       operationId: "getKeyData"
       produces:
       - "application/json"
@@ -1502,6 +1720,7 @@ paths:
           - "DELETE_ATTRIBUTE"
           - "DERIVE_KEY"
           - "DESTROY"
+          - "DELETE"
           - "DY_DERIVE"
           - "DY_GET_KEY_MATERIAL"
           - "DY_GET_SECRET_DATA"
@@ -1516,6 +1735,7 @@ paths:
           - "REVOKE"
           - "SIGN"
           - "SIGNATURE_VERIFY"
+          - "DY_ENABLE"
         collectionFormat: "multi"
       responses:
         200:
@@ -1882,9 +2102,13 @@ definitions:
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
         - "DB_BACKUP_INCONSISTENT"
+        - "DB_BACKUP_FAILURE"
         - "SECRET_ABOUT_TO_EXPIRE"
         - "SECRET_EXPIRED"
         - "KEY_ROTATION_IS_APPROACHING"
+        - "KEY_ACTIVATION_IS_APPROACHING"
+        - "KEY_DEACTIVATION_IS_APPROACHING"
+        - "RESTART_REQUIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -1914,9 +2138,13 @@ definitions:
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
         - "DB_BACKUP_INCONSISTENT"
+        - "DB_BACKUP_FAILURE"
         - "SECRET_ABOUT_TO_EXPIRE"
         - "SECRET_EXPIRED"
         - "KEY_ROTATION_IS_APPROACHING"
+        - "KEY_ACTIVATION_IS_APPROACHING"
+        - "KEY_DEACTIVATION_IS_APPROACHING"
+        - "RESTART_REQUIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -2136,6 +2364,14 @@ definitions:
       isPrefix:
         type: "boolean"
         description: "True for prefix, false for suffix"
+  DeactivationInfo:
+    type: "object"
+    properties:
+      revocationReason:
+        type: "string"
+      message:
+        type: "string"
+    description: "Deactivated key info"
   DecryptData:
     type: "object"
     required:
@@ -2207,6 +2443,25 @@ definitions:
         description: "Concat derivation parameters"
         $ref: "#/definitions/ConcatDerivationParams"
     description: "Input for a derive operation"
+  DeriveKeyData:
+    type: "object"
+    required:
+    - "data"
+    properties:
+      data:
+        type: "string"
+        description: "data"
+      dataEncoding:
+        type: "string"
+        description: "data encoding"
+        enum:
+        - "PLAIN"
+        - "BASE64"
+        - "HEX"
+      size:
+        type: "integer"
+        format: "int32"
+        description: "key size"
   ECCBipKeyInfo:
     type: "object"
     properties:
@@ -2373,6 +2628,9 @@ definitions:
       offlineEcdsaParams:
         description: "Required for offline ECDSA keys"
         $ref: "#/definitions/OfflineEcdsaParams"
+      offlineECParams:
+        description: "Required for offline ECC keys"
+        $ref: "#/definitions/OfflineECParams"
   KeyInfo:
     type: "object"
     properties:
@@ -2395,6 +2653,7 @@ definitions:
         - "PRIVATE_KEY"
         - "SYMMETRIC"
         - "PUBLIC_KEY"
+        - "SECRET_DATA"
       keyFormat:
         readOnly: true
         $ref: "#/definitions/KeyFormat"
@@ -2423,7 +2682,10 @@ definitions:
         - "DEACTIVATED"
         - "COMPROMISED"
         - "DESTROYED"
-        - "DESTROYEDCOMPROMISED"
+        - "DESTROYED_COMPROMISED"
+      isEnabled:
+        type: "boolean"
+        readOnly: true
       sync:
         type: "boolean"
         description: "This key is synchronized in within the UKC pair"
@@ -2481,11 +2743,35 @@ definitions:
         type: "string"
         description: "Last update date"
         readOnly: true
+      activationDate:
+        type: "string"
+        description: "Activation date"
+        readOnly: true
+      deactivationDate:
+        type: "string"
+        description: "Deactivation date"
+        readOnly: true
+      compromiseDate:
+        type: "string"
+        description: "Compromise date"
+        readOnly: true
+      compromiseOccurrenceDate:
+        type: "string"
+        description: "Compromise occurrence date"
+        readOnly: true
       alertLevel:
         type: "string"
         readOnly: true
         enum:
         - "WARN"
+      deactivationInfo:
+        description: "Deactivated key information"
+        readOnly: true
+        $ref: "#/definitions/DeactivationInfo"
+      getdestroyDate:
+        type: "string"
+        description: "Destroy date"
+        readOnly: true
     description: "Key object details"
   KeyInfoListResponse:
     type: "object"
@@ -2526,6 +2812,8 @@ definitions:
           - "WRAP"
           - "UNWRAP"
           - "DERIVE"
+          - "MAC"
+          - "MAC_VERIFY"
       trusted:
         type: "boolean"
         example: false
@@ -2537,6 +2825,8 @@ definitions:
         minimum: 0
       exportType:
         type: "string"
+        description: "The default value is <i>IN_PLAIN</i> for certificates and public\
+          \ keys. Otherwise, the default is <i>NOT_EXPORTABLE</i>."
         enum:
         - "IN_PLAIN"
         - "WRAPPED"
@@ -2563,6 +2853,16 @@ definitions:
         uniqueItems: true
         items:
           type: "string"
+      activationDate:
+        type: "integer"
+        format: "int64"
+        description: "Activation date"
+        readOnly: true
+      deactivationDate:
+        type: "integer"
+        format: "int64"
+        description: "Deactivation date"
+        readOnly: true
   Label:
     type: "object"
     required:
@@ -2636,9 +2936,12 @@ definitions:
         enum:
         - "GMAC"
         - "CMAC"
-        - "HMAC"
+        - "HMAC_SHA1"
+        - "HMAC_SHA256"
+        - "HMAC_SHA384"
+        - "HMAC_SHA512"
       iv:
-        description: "Externally provided IV, default encoded in BAS64"
+        description: "Externally provided IV, default encoded in BASE64"
         $ref: "#/definitions/Iv"
       tagLength:
         type: "integer"
@@ -2653,10 +2956,6 @@ definitions:
         type: "string"
         description: "An ID for the new key"
         minLength: 1
-      keyFormat:
-        $ref: "#/definitions/KeyFormat"
-      keyProperties:
-        $ref: "#/definitions/KeyProperties"
       keyIdEncoding:
         type: "string"
         description: "Encoding for the new key ID"
@@ -2665,6 +2964,21 @@ definitions:
         - "PLAIN"
         - "BASE64"
         - "HEX"
+      keyProperties:
+        $ref: "#/definitions/KeyProperties"
+      activate:
+        type: "boolean"
+        description: "Activate the key"
+      activationDate:
+        type: "integer"
+        format: "int64"
+        description: "Activation date"
+      deactivationDate:
+        type: "integer"
+        format: "int64"
+        description: "Deactivation date"
+      keyFormat:
+        $ref: "#/definitions/KeyFormat"
   NewGeneratedSecret:
     type: "object"
     required:
@@ -2723,11 +3037,34 @@ definitions:
         description: "OAEP label, default encoding as PLAIN"
         $ref: "#/definitions/Label"
     description: "(Only relevant for encryption) The OAEP padding parameters"
+  OfflineECParams:
+    type: "object"
+    required:
+    - "keepKeyMaterial"
+    - "paillierKey"
+    - "paillierKeys"
+    properties:
+      backup:
+        type: "string"
+        description: "BASE64 ECDSA offline backup"
+        readOnly: true
+      paillierKey:
+        type: "string"
+        description: "EC offline Paillier key public key"
+      paillierKeys:
+        type: "array"
+        description: "EC offline Paillier keys public key"
+        items:
+          type: "string"
+      keepKeyMaterial:
+        type: "boolean"
+        description: "True when saving the key material"
   OfflineEcdsaParams:
     type: "object"
     required:
     - "keepKeyMaterial"
     - "paillierKey"
+    - "paillierKeys"
     properties:
       backup:
         type: "string"
@@ -2736,6 +3073,11 @@ definitions:
       paillierKey:
         type: "string"
         description: "ECDSA offline Paillier key public key"
+      paillierKeys:
+        type: "array"
+        description: "EC offline Paillier keys public key"
+        items:
+          type: "string"
       keepKeyMaterial:
         type: "boolean"
         description: "True when saving the key material"
@@ -2771,6 +3113,7 @@ definitions:
       type:
         type: "string"
         enum:
+        - "RAW"
         - "PKCS1"
         - "OAEP"
         - "PSS"
@@ -2802,6 +3145,29 @@ definitions:
         description: "base64 encoded entropy bytes"
         minLength: 1
     description: "Random Entropy Bytes"
+  RevokeParams:
+    type: "object"
+    properties:
+      compromiseOccurrenceDate:
+        type: "integer"
+        format: "int64"
+        description: "Date when the compromise occurred"
+      message:
+        type: "string"
+        description: "revocation message"
+        readOnly: true
+      reason:
+        type: "string"
+        description: "Revocation reason"
+        readOnly: true
+        enum:
+        - "UNSPECIFIED"
+        - "KEY_COMPROMISE"
+        - "CA_COMPROMISE"
+        - "AFFILIATION_CHANGED"
+        - "SUPERSEDED"
+        - "CESSATION_OF_OPERATION"
+        - "PRIVILEGE_WITHDRAWN"
   SealData:
     type: "object"
     required:
@@ -2899,6 +3265,8 @@ definitions:
     required:
     - "data"
     properties:
+      paillierKey:
+        type: "string"
       data:
         type: "string"
         description: "data"
@@ -2963,14 +3331,19 @@ definitions:
         - "SIV"
         - "NISTWRAP"
       iv:
-        description: "Externally provided IV, default encoded in BAS64"
+        description: "Externally provided IV, default encoded in BASE64. Must be no\
+          \ more than 15 bytes."
         $ref: "#/definitions/Iv"
       aad:
-        description: "Authentication data, default encoded in PLAIN"
+        description: "Authentication data, default encoding is PLAIN"
         $ref: "#/definitions/Aad"
       tagLength:
         type: "integer"
         format: "int32"
+        example: 16
+        description: "For CCM, the value must be between 4 and 16, inclusive, and\
+          \ must be even. For other algorithms, the value must be between 1 and 16,\
+          \ inclusive."
   SystemCertificate:
     type: "object"
     required:
@@ -3079,8 +3452,8 @@ definitions:
       allowedOperations:
         type: "array"
         example: "{Create,Destroy,Sign,...}"
-        description: "A list of operation Id's that represent the operations that\
-          \ the current user is allowed to use. Should match the operation Id's as\
+        description: "A list of operation ID's that represent the operations that\
+          \ the current user is allowed to use. Should match the operation ID's as\
           \ specified in this document"
         readOnly: true
         items:
@@ -3164,7 +3537,7 @@ definitions:
         type: "boolean"
         description: "do hash or not"
       signature:
-        description: "Signature, encoded as BAS64"
+        description: "Signature, encoded as BASE64"
         $ref: "#/definitions/Signature"
     description: "Includes data used for signature verification"
   WrapData:
