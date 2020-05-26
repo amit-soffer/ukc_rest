@@ -69,7 +69,7 @@ info:
     \ for different jobs.\n\n\n## Common Errors\nAny API call can result in one of\
     \ the following general HTTP codes:\n- 500 - General server error\n- 404 - Resource\
     \ not found. Verify that the url exists\n- 401 - Unauthorized"
-  version: "2.0.2001"
+  version: "2.0.2004"
   title: "UKC Admin API"
   contact:
     name: "Contact"
@@ -83,6 +83,7 @@ tags:
 - name: "Jobs"
 - name: "Partitions"
 - name: "Roles"
+- name: "Servers"
 - name: "System"
 - name: "Users"
 schemes:
@@ -381,8 +382,9 @@ paths:
     post:
       tags:
       - "Clients"
-      summary: "Create a client with certificate"
-      description: "Creates a new client and returns the certificate."
+      summary: "Create client with certificate"
+      description: "Creates a new client and returns the certificate. It uses CSR\
+        \ or public key material."
       operationId: "createClientWithCertificate"
       consumes:
       - "application/json"
@@ -421,8 +423,9 @@ paths:
     post:
       tags:
       - "Clients"
-      summary: "Create a client with certificate"
-      description: "Creates a new client and returns the certificate."
+      summary: "Create client with cert from file"
+      description: "Creates a new client and returns the certificate. It uses FS description\
+        \ of the certificate."
       operationId: "createClientWithCertificateWithFile"
       consumes:
       - "multipart/form-data"
@@ -1470,10 +1473,28 @@ paths:
           description: "OK"
           schema:
             type: "file"
+  /api/v1/servers/alerts:
+    get:
+      tags:
+      - "Servers"
+      summary: "Get server alerts"
+      description: "Get server alerts."
+      operationId: "getServersAlerts"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Server"
+      security:
+      - basicAuth: []
+      - Authorization: []
   /api/v1/servers/new/auxiliary:
     get:
       tags:
-      - "System"
+      - "Servers"
       summary: "Get auxiliary certificate"
       description: "Get the new auxiliary server certificate."
       operationId: "getNewAuxiliary"
@@ -1503,7 +1524,7 @@ paths:
       - Authorization: []
     post:
       tags:
-      - "System"
+      - "Servers"
       summary: "Add auxiliary server"
       description: "Add a new auxiliary server."
       operationId: "addAuxServer"
@@ -1538,7 +1559,7 @@ paths:
   /api/v1/servers/new/pair:
     get:
       tags:
-      - "System"
+      - "Servers"
       summary: "Get server pair certificates"
       description: "Get the new crypto server pair certificates."
       operationId: "getNewPair"
@@ -1579,7 +1600,7 @@ paths:
       - Authorization: []
     post:
       tags:
-      - "System"
+      - "Servers"
       summary: "Add UKC server pair"
       description: "Add a new UKC server pair."
       operationId: "addServerPair"
@@ -1614,7 +1635,7 @@ paths:
   /api/v1/servers/{serverId}:
     get:
       tags:
-      - "System"
+      - "Servers"
       summary: "Get server details"
       description: "Get detailed server information."
       operationId: "getServer"
@@ -1641,7 +1662,7 @@ paths:
       - Authorization: []
     delete:
       tags:
-      - "System"
+      - "Servers"
       summary: "Delete server"
       description: "Removes an auxiliary server or server pair from UKC cluster. A\
         \ server pair is treated as one unit, identified by the host of its Entry\
@@ -1661,6 +1682,29 @@ paths:
       responses:
         200:
           description: "Server deleted"
+      security:
+      - basicAuth: []
+      - Authorization: []
+  /api/v1/servers/{serverId}/alerts:
+    get:
+      tags:
+      - "Servers"
+      summary: "Get server alerts"
+      description: "Get server alerts."
+      operationId: "getServerAlerts"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "serverId"
+        in: "path"
+        description: "The identifier of the server is it&#39;s url (escaped)"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Server"
       security:
       - basicAuth: []
       - Authorization: []
@@ -1760,7 +1804,7 @@ paths:
         200:
           description: "successful operation"
           schema:
-            $ref: "#/definitions/SystemCertificate"
+            $ref: "#/definitions/Alert"
       security:
       - basicAuth: []
       - Authorization: []
@@ -2248,9 +2292,13 @@ definitions:
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
         - "DB_BACKUP_INCONSISTENT"
+        - "DB_BACKUP_FAILURE"
         - "SECRET_ABOUT_TO_EXPIRE"
         - "SECRET_EXPIRED"
         - "KEY_ROTATION_IS_APPROACHING"
+        - "KEY_ACTIVATION_IS_APPROACHING"
+        - "KEY_DEACTIVATION_IS_APPROACHING"
+        - "RESTART_REQUIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -2280,9 +2328,13 @@ definitions:
         - "IS_LOCKED"
         - "RENEW_REQUIRED"
         - "DB_BACKUP_INCONSISTENT"
+        - "DB_BACKUP_FAILURE"
         - "SECRET_ABOUT_TO_EXPIRE"
         - "SECRET_EXPIRED"
         - "KEY_ROTATION_IS_APPROACHING"
+        - "KEY_ACTIVATION_IS_APPROACHING"
+        - "KEY_DEACTIVATION_IS_APPROACHING"
+        - "RESTART_REQUIRED"
       alertLevel:
         type: "string"
         readOnly: true
@@ -2605,17 +2657,19 @@ definitions:
         - "MANUAL_TEST"
         - "GENERAL_FAILURE"
         - "INVALID"
+      error:
+        type: "string"
       date:
         type: "string"
       file:
         type: "string"
-      pairHostnames:
+      pair hostnames:
         type: "array"
         items:
           type: "string"
       version:
         type: "string"
-      digestDiff:
+      digest diff:
         $ref: "#/definitions/DigestDiff"
       alertLevel:
         type: "string"
@@ -2642,15 +2696,34 @@ definitions:
         readOnly: true
         items:
           $ref: "#/definitions/DbBackup"
+  DiffEntry:
+    type: "object"
+    properties:
+      object type:
+        type: "string"
+      digest source:
+        type: "string"
+      uid:
+        type: "string"
+      name:
+        type: "string"
+      partition id:
+        type: "string"
+      partition name:
+        type: "string"
+      version:
+        type: "string"
+      detail:
+        type: "string"
   DiffRecord:
     type: "object"
     properties:
       sectionDiff:
         type: "string"
-      entitiesDiff:
+      entriesDiff:
         type: "array"
         items:
-          type: "string"
+          $ref: "#/definitions/DiffEntry"
   DigestDiff:
     type: "object"
     properties:
@@ -2810,6 +2883,7 @@ definitions:
         - "ARRAY"
         - "MAP"
         - "CERTIFICATE"
+        - "POLICY"
       defaultValue:
         type: "string"
         description: "default value"
@@ -3250,6 +3324,11 @@ definitions:
         - "FIPS_MANDATORY"
         - "FIPS_PREFERRED"
         - "FIPS_NONE"
+      policy:
+        type: "array"
+        description: "The Partition Policy"
+        items:
+          $ref: "#/definitions/PartitionPolicyRule"
       jWTExpiration:
         type: "integer"
         format: "int32"
@@ -3277,6 +3356,123 @@ definitions:
         readOnly: true
         items:
           $ref: "#/definitions/Partition"
+  PartitionPolicyRule:
+    type: "object"
+    required:
+    - "type"
+    properties:
+      type:
+        type: "string"
+        enum:
+        - "RSA"
+        - "ECC"
+        - "AES"
+        - "TDES"
+        - "HMAC"
+        - "SIV"
+        - "XTS"
+        - "PRF"
+        - "PWD"
+        - "LIMA"
+        - "EDDSA"
+      minSize:
+        type: "integer"
+        format: "int32"
+        description: "minimum size"
+        minimum: 0
+      curves:
+        type: "array"
+        description: "allowed curves"
+        uniqueItems: true
+        items:
+          type: "string"
+          enum:
+          - "P256"
+          - "P384"
+          - "P521"
+          - "SECP_256K_1"
+      operations:
+        type: "array"
+        description: "allowed operations"
+        uniqueItems: true
+        items:
+          type: "string"
+          enum:
+          - "SIGN"
+          - "VERIFY"
+          - "ENCRYPT"
+          - "DECRYPT"
+          - "WRAP"
+          - "UNWRAP"
+          - "DERIVE"
+          - "MAC"
+          - "MAC_VERIFY"
+      paddings:
+        type: "array"
+        description: "allowed paddings"
+        uniqueItems: true
+        items:
+          type: "string"
+          enum:
+          - "RAW"
+          - "PKCS1"
+          - "OAEP"
+          - "PSS"
+      hashes:
+        type: "array"
+        description: "allowed hashs"
+        uniqueItems: true
+        items:
+          type: "string"
+          enum:
+          - "SHA1"
+          - "SHA256"
+          - "SHA384"
+          - "SHA512"
+      modes:
+        type: "array"
+        description: "allowed modes"
+        uniqueItems: true
+        items:
+          type: "string"
+          enum:
+          - "ECB"
+          - "CBC"
+          - "OFB"
+          - "CFB"
+          - "CTR"
+          - "GCM"
+          - "CCM"
+          - "XTS"
+          - "SIV"
+          - "NISTWRAP"
+      macs:
+        type: "array"
+        description: "allowed macs"
+        uniqueItems: true
+        items:
+          type: "string"
+          enum:
+          - "GMAC"
+          - "CMAC"
+          - "HMAC_SHA1"
+          - "HMAC_SHA256"
+          - "HMAC_SHA384"
+          - "HMAC_SHA512"
+      exportType:
+        type: "string"
+        description: "minimum export type"
+        enum:
+        - "IN_PLAIN"
+        - "WRAPPED"
+        - "WRAPPED_WITH_TRUSTED"
+        - "NON_EXPORTABLE"
+      trusted:
+        type: "boolean"
+        description: "is trusted"
+      local:
+        type: "boolean"
+        description: "is local"
   Password:
     type: "object"
     properties:
@@ -3448,6 +3644,7 @@ definitions:
           - "DELETE_ATTRIBUTE"
           - "DERIVE_KEY"
           - "DESTROY"
+          - "DELETE"
           - "DY_DERIVE"
           - "DY_GET_KEY_MATERIAL"
           - "DY_GET_SECRET_DATA"
@@ -3462,6 +3659,7 @@ definitions:
           - "REVOKE"
           - "SIGN"
           - "SIGNATURE_VERIFY"
+          - "DY_ENABLE"
   Server:
     type: "object"
     properties:
@@ -3515,6 +3713,18 @@ definitions:
       version:
         type: "string"
         description: "The server version"
+        readOnly: true
+      error:
+        type: "string"
+        description: "The server status error"
+        readOnly: true
+      lastStart:
+        type: "string"
+        description: "The server last starting time"
+        readOnly: true
+      requireRestart:
+        type: "string"
+        description: "The server needed to be restarted"
         readOnly: true
       alertLevel:
         type: "string"
@@ -3650,8 +3860,8 @@ definitions:
       allowedOperations:
         type: "array"
         example: "{Create,Destroy,Sign,...}"
-        description: "A list of operation Id's that represent the operations that\
-          \ the current user is allowed to use. Should match the operation Id's as\
+        description: "A list of operation ID's that represent the operations that\
+          \ the current user is allowed to use. Should match the operation ID's as\
           \ specified in this document"
         readOnly: true
         items:
@@ -3676,7 +3886,7 @@ definitions:
     properties:
       value:
         type: "string"
-        example: "U09Acm9vdDpQYXNzd29yZDEh"
+        example: "eyJraWQiOiIweDAwMGNhZGQ5ODZiNWMwYTM5NCIsImFsZyI6IkVTMjU2In0.eyJzdWIiOiJzb0BhenVyZSIsIm9yaWciOiIxMjcuMC4wLjEiLCJpc3MiOiJVTkJPVU5EIiwiaXNfcmVmcmVzaCI6ZmFsc2UsImV4cCI6MTU4MjQ0OTczNSwiaWF0IjoxNTgyNDQ3OTM1LCJqdGkiOiI5YWE0YjhiYi1kMGM4LTQxODEtYjhlMC0zYWQ4ODkzYjg1ZjcifQ.jqwC3O4XuIb678uVsBkWh-bBpvumnEIoFtde-xdBcF9CpUnqC1FURw6dpDeIb9TZvIzXDsjusucwv-JjjYbUYA"
         description: "The generated authentication token"
         minLength: 1
     description: "Auth Token"
